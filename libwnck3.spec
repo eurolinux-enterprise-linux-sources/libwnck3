@@ -1,7 +1,7 @@
 Summary: Window Navigator Construction Kit
 Name: libwnck3
 Version: 3.4.5
-Release: 1%{?dist}
+Release: 3%{?dist}
 URL: http://download.gnome.org/sources/libwnck/
 #VCS: git:git://git.gnome.org/libwnck
 Source0: http://download.gnome.org/sources/libwnck/3.4/libwnck-%{version}.tar.xz
@@ -70,6 +70,12 @@ find $RPM_BUILD_ROOT -name '*.la' -exec rm -f {} ';'
 %doc %{_datadir}/gtk-doc
 
 %changelog
+* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 3.4.5-3
+- Mass rebuild 2014-01-24
+
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 3.4.5-2
+- Mass rebuild 2013-12-27
+
 * Tue Feb 19 2013 Richard Hughes <rhughes@redhat.com> - 3.4.5-1
 - Update to 3.4.5
 
