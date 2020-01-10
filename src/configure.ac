@@ -1,7 +1,7 @@
 AC_PREREQ(2.62)
 
 m4_define([wnck_major_version], [3])
-m4_define([wnck_minor_version], [20])
+m4_define([wnck_minor_version], [24])
 m4_define([wnck_micro_version], [1])
 m4_define([wnck_version],
           [wnck_major_version.wnck_minor_version.wnck_micro_version])
@@ -9,27 +9,30 @@ m4_define([wnck_version],
 AC_INIT([libwnck], [wnck_version],
         [http://bugzilla.gnome.org/enter_bug.cgi?product=libwnck])
 
+AX_IS_RELEASE([git-directory])
+
+AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS(config.h)
 
 AM_INIT_AUTOMAKE([1.11 no-dist-gzip dist-xz tar-ustar])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 AC_CONFIG_MACRO_DIR([m4])
 
-GNOME_MAINTAINER_MODE_DEFINES
+AX_CHECK_ENABLE_DEBUG([yes])
 
 dnl libtool versioning for libwnck
 
 dnl increment if the interface has additions, changes, removals.
-LIBWNCK_CURRENT=2
+LIBWNCK_CURRENT=3
 
 dnl increment any time the source changes; set to
 dnl  0 if you increment CURRENT
-LIBWNCK_REVISION=2
+LIBWNCK_REVISION=0
 
 dnl increment if any interfaces have been added; set to 0
 dnl  if any interfaces have been changed or removed. removal has
 dnl  precedence over adding, so set to 0 if both happened.
-LIBWNCK_AGE=2
+LIBWNCK_AGE=3
 
 AC_SUBST(LIBWNCK_CURRENT)
 AC_SUBST(LIBWNCK_REVISION)
@@ -45,11 +48,9 @@ AC_SUBST(WNCK_MICRO_VERSION)
 LT_PREREQ([2.2.6])
 LT_INIT([dlopen disable-static])
 
-IT_PROG_INTLTOOL([0.40.6])
-
 AC_PROG_CC
 
-GNOME_COMPILE_WARNINGS([maximum])
+AX_COMPILER_FLAGS([WARN_CFLAGS], [WARN_LDFLAGS])
 
 AC_ARG_ENABLE(deprecation_flags,
               [AC_HELP_STRING([--enable-deprecation-flags],
@@ -67,17 +68,14 @@ AC_ARG_ENABLE(tools,
               [enable_tools=yes])
 AM_CONDITIONAL(ENABLE_TOOLS, test "x$enable_tools" != "xno")
 
+AM_GNU_GETTEXT_VERSION([0.19.4])
+AM_GNU_GETTEXT([external])
+
 GETTEXT_PACKAGE=libwnck-3.0
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [Package name])
 
-AM_GLIB_GNU_GETTEXT
-
-# AM_GLIB_GNU_GETTEXT above substs $DATADIRNAME
-# this is the directory where the *.{mo,gmo} files are installed
-wncklocaledir='${prefix}/${DATADIRNAME}/locale'
-AC_SUBST(wncklocaledir)
-
+AC_PATH_PROG([GLIB_COMPILE_RESOURCES], [glib-compile-resources])
 AC_PATH_PROG(PKG_CONFIG, pkg-config)
 
 AC_CHECK_LIBM
@@ -148,21 +146,13 @@ AC_SUBST(XLIB_CFLAGS)
 AC_SUBST(XLIB_LIBS)
 
 PKG_CHECK_MODULES([LIBWNCK],[
-	gtk+-3.0 >= 3.16
+	gtk+-3.0 >= 3.22.0
 	glib-2.0 >= 2.32
 	gobject-2.0 >= 2.13.0
 	$CAIRO_XLIB_XRENDER_PACKAGE
 	$STARTUP_NOTIFICATION_PACKAGE
 	$XRES_PACKAGE
 ])
-
-AC_PATH_PROG(GDK_PIXBUF_CSOURCE, gdk-pixbuf-csource, no)
-
-if test x"$GDK_PIXBUF_CSOURCE" = xno; then
-  AC_MSG_ERROR([gdk-pixbuf-csource executable not found in your path - should be installed with GTK])
-fi
-
-AC_SUBST(GDK_PIXBUF_CSOURCE)
 
 ##################################################
 # Checks for gtk-doc and docbook-tools

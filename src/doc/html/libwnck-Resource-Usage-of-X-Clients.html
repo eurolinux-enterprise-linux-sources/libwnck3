@@ -7,7 +7,7 @@
 <link rel="home" href="index.html" title="Libwnck Reference Manual">
 <link rel="up" href="utils.html" title="Part V. Libwnck Utilities">
 <link rel="prev" href="utils.html" title="Part V. Libwnck Utilities">
-<link rel="next" href="libwnck-Icons-Functions.html" title="Icon Files">
+<link rel="next" href="libwnck-Icons-Functions.html" title="Icons Functions">
 <meta name="generator" content="GTK-Doc V1.25 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
@@ -104,8 +104,8 @@ window ID of one of their windows or by the process ID of their process.</p>
 <div class="refsect2">
 <a name="wnck-xid-read-resource-usage"></a><h3>wnck_xid_read_resource_usage ()</h3>
 <pre class="programlisting"><span class="returnvalue">void</span>
-wnck_xid_read_resource_usage (<em class="parameter"><code><a href="/usr/share/gtk-doc/html/gdk3GdkDisplay.html#GdkDisplay-struct"><span class="type">GdkDisplay</span></a> *gdk_display</code></em>,
-                              <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gulong"><span class="type">gulong</span></a> xid</code></em>,
+wnck_xid_read_resource_usage (<em class="parameter"><code><span class="type">GdkDisplay</span> *gdk_display</code></em>,
+                              <em class="parameter"><code><span class="type">gulong</span> xid</code></em>,
                               <em class="parameter"><code><a class="link" href="libwnck-Resource-Usage-of-X-Clients.html#WnckResourceUsage" title="struct WnckResourceUsage"><span class="type">WnckResourceUsage</span></a> *usage</code></em>);</pre>
 <p>Looks for the X resource usage of the application owning the X window ID
 <em class="parameter"><code>xid</code></em>
@@ -149,8 +149,8 @@ the X window ID <em class="parameter"><code>xid</code></em>
 <div class="refsect2">
 <a name="wnck-pid-read-resource-usage"></a><h3>wnck_pid_read_resource_usage ()</h3>
 <pre class="programlisting"><span class="returnvalue">void</span>
-wnck_pid_read_resource_usage (<em class="parameter"><code><a href="/usr/share/gtk-doc/html/gdk3GdkDisplay.html#GdkDisplay-struct"><span class="type">GdkDisplay</span></a> *gdk_display</code></em>,
-                              <em class="parameter"><code><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gulong"><span class="type">gulong</span></a> pid</code></em>,
+wnck_pid_read_resource_usage (<em class="parameter"><code><span class="type">GdkDisplay</span> *gdk_display</code></em>,
+                              <em class="parameter"><code><span class="type">gulong</span> pid</code></em>,
                               <em class="parameter"><code><a class="link" href="libwnck-Resource-Usage-of-X-Clients.html#WnckResourceUsage" title="struct WnckResourceUsage"><span class="type">WnckResourceUsage</span></a> *usage</code></em>);</pre>
 <p>Looks for the X resource usage of the application with process ID <em class="parameter"><code>pid</code></em>
  on
@@ -233,13 +233,13 @@ resource type.</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="struct_member_name"><p><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gulong"><span class="type">gulong</span></a> <em class="structfield"><code><a name="WnckResourceUsage.total-bytes-estimate"></a>total_bytes_estimate</code></em>;</p></td>
+<td class="struct_member_name"><p><span class="type">gulong</span> <em class="structfield"><code><a name="WnckResourceUsage.total-bytes-estimate"></a>total_bytes_estimate</code></em>;</p></td>
 <td class="struct_member_description"><p>estimation of the total number of bytes allocated in
 the X server.</p></td>
 <td class="struct_member_annotations"> </td>
 </tr>
 <tr>
-<td class="struct_member_name"><p><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gulong"><span class="type">gulong</span></a> <em class="structfield"><code><a name="WnckResourceUsage.pixmap-bytes"></a>pixmap_bytes</code></em>;</p></td>
+<td class="struct_member_name"><p><span class="type">gulong</span> <em class="structfield"><code><a name="WnckResourceUsage.pixmap-bytes"></a>pixmap_bytes</code></em>;</p></td>
 <td class="struct_member_description"><p>number of bytes allocated in the X server for resources of
 type Pixmap.</p></td>
 <td class="struct_member_annotations"> </td>

@@ -1,14 +1,13 @@
+%global source_name libwnck
+
 Summary: Window Navigator Construction Kit
 Name: libwnck3
-Version: 3.20.1
-Release: 1%{?dist}
-URL: http://download.gnome.org/sources/libwnck/
-#VCS: git:git://git.gnome.org/libwnck
-Source0: http://download.gnome.org/sources/libwnck/3.20/libwnck-%{version}.tar.xz
+Version: 3.24.1
+Release: 2%{?dist}
+URL: http://download.gnome.org/sources/%{source_name}/
+Source0: http://download.gnome.org/sources/%{source_name}/3.24/%{source_name}-%{version}.tar.xz
 License: LGPLv2+
 Group: System Environment/Libraries
-
-Requires: startup-notification
 
 BuildRequires: glib2-devel
 BuildRequires: gtk3-devel
@@ -20,7 +19,8 @@ BuildRequires: gettext
 BuildRequires: intltool
 BuildRequires: libtool, automake, autoconf
 BuildRequires: gnome-common
-Conflicts: libwnck < 2.30.4-2.fc15
+
+Requires:      startup-notification
 
 %description
 libwnck (pronounced "libwink") is used to implement pagers, tasklists,
@@ -36,40 +36,52 @@ Requires: %{name}%{?_isa} = %{version}-%{release}
 The %{name}-devel package contains libraries and header files for
 developing applications that use %{name}.
 
+
 %prep
-%setup -q -n libwnck-%{version}
+%setup -q -n %{source_name}-%{version}
 
 %build
-rm -f libtool
-autoreconf -f -i
-%configure --disable-static
-make %{?_smp_mflags}
+%configure \
+    --disable-static \
+    --enable-introspection=yes \
+    --enable-startup-notification
+
+%{make_build}
 
 %install
-make install DESTDIR=$RPM_BUILD_ROOT INSTALL="install -p"
-find $RPM_BUILD_ROOT -name '*.la' -exec rm -f {} ';'
+%{make_install}
 
-%find_lang libwnck-3.0
+find %{buildroot} -name '*.la' -exec rm -f {} ';'
+
+%find_lang %{source_name}-3.0 --with-gnome --all-name
+
 
 %post -p /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
 
-%files -f libwnck-3.0.lang
-%doc AUTHORS COPYING README NEWS
-%{_libdir}/lib*.so.*
+
+%files -f %{source_name}-3.0.lang
+%license COPYING
+%doc AUTHORS README NEWS
+%{_libdir}/%{source_name}-3.so.*
 %{_bindir}/wnck-urgency-monitor
 %{_libdir}/girepository-1.0/Wnck-3.0.typelib
 
 %files devel
 %{_bindir}/wnckprop
-%{_libdir}/lib*.so
+%{_libdir}/%{source_name}-3.so
 %{_libdir}/pkgconfig/*
-%{_includedir}/*
+%{_includedir}/%{source_name}-3.0/
 %{_datadir}/gir-1.0/Wnck-3.0.gir
 %doc %{_datadir}/gtk-doc
 
+
 %changelog
+* Wed Jun 06 2018 Richard Hughes <rhughes@redhat.com> - 3.24.1-2
+- Update to 3.24.1
+- Resolves: #1569735
+
 * Thu Nov 24 2016 Kalev Lember <klember@redhat.com> - 3.20.1-1
 - Update to 3.20.1
 - Resolves: #1387021

@@ -106,7 +106,7 @@ mentioned in the release notes for the affected release.
 </tr>
 <tr>
 <td class="function_type">
-<a href="/usr/share/gtk-doc/html/glibglib-Doubly-Linked-Lists.html#GList"><span class="returnvalue">GList</span></a> *
+<span class="returnvalue">GList</span> *
 </td>
 <td class="function_name">
 <a class="link" href="WnckClassGroup.html#wnck-class-group-get-windows" title="wnck_class_group_get_windows ()">wnck_class_group_get_windows</a> <span class="c_punctuation">()</span>
@@ -127,12 +127,12 @@ mentioned in the release notes for the affected release.
 <tr>
 <td class="signal_type"><span class="returnvalue">void</span></td>
 <td class="signal_name"><a class="link" href="WnckClassGroup.html#WnckClassGroup-icon-changed" title="The “icon-changed” signal">icon-changed</a></td>
-<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobjectgobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+<td class="signal_flags">Run Last</td>
 </tr>
 <tr>
 <td class="signal_type"><span class="returnvalue">void</span></td>
 <td class="signal_name"><a class="link" href="WnckClassGroup.html#WnckClassGroup-name-changed" title="The “name-changed” signal">name-changed</a></td>
-<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobjectgobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+<td class="signal_flags">Run Last</td>
 </tr>
 </tbody>
 </table></div>
@@ -152,7 +152,7 @@ mentioned in the release notes for the affected release.
 </div>
 <div class="refsect1">
 <a name="WnckClassGroup.object-hierarchy"></a><h2>Object Hierarchy</h2>
-<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
+<pre class="screen">    GObject
     <span class="lineart">╰──</span> WnckClassGroup
 </pre>
 </div>
@@ -199,7 +199,7 @@ wnck_class_group_get (<em class="parameter"><code>const <span class="type">char<
 <a name="wnck-class-group-get.returns"></a><h4>Returns</h4>
 <p> the <a class="link" href="WnckClassGroup.html" title="WnckClassGroup"><span class="type">WnckClassGroup</span></a> corresponding to
 <em class="parameter"><code>id</code></em>
-, or <a href="/usr/share/gtk-doc/html/glibglib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> if there is no <a class="link" href="WnckClassGroup.html" title="WnckClassGroup"><span class="type">WnckClassGroup</span></a> with the specified
+, or <code class="literal">NULL</code> if there is no <a class="link" href="WnckClassGroup.html" title="WnckClassGroup"><span class="type">WnckClassGroup</span></a> with the specified
 <em class="parameter"><code>id</code></em>
 . The returned <a class="link" href="WnckClassGroup.html" title="WnckClassGroup"><span class="type">WnckClassGroup</span></a> is owned by libwnck and must not be
 referenced or unreferenced. </p>
@@ -385,7 +385,7 @@ to keep the mini-icon around. </p>
 <hr>
 <div class="refsect2">
 <a name="wnck-class-group-get-windows"></a><h3>wnck_class_group_get_windows ()</h3>
-<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glibglib-Doubly-Linked-Lists.html#GList"><span class="returnvalue">GList</span></a> *
+<pre class="programlisting"><span class="returnvalue">GList</span> *
 wnck_class_group_get_windows (<em class="parameter"><code><a class="link" href="WnckClassGroup.html" title="WnckClassGroup"><span class="type">WnckClassGroup</span></a> *class_group</code></em>);</pre>
 <p>Gets the list of <a class="link" href="WnckWindow.html" title="WnckWindow"><span class="type">WnckWindow</span></a> that are grouped in <em class="parameter"><code>class_group</code></em>
 .</p>
@@ -408,7 +408,7 @@ wnck_class_group_get_windows (<em class="parameter"><code><a class="link" href="
 <a name="wnck-class-group-get-windows.returns"></a><h4>Returns</h4>
 <p> the list of
 <a class="link" href="WnckWindow.html" title="WnckWindow"><span class="type">WnckWindow</span></a> grouped in <em class="parameter"><code>class_group</code></em>
-, or <a href="/usr/share/gtk-doc/html/glibglib-Standard-Macros.html#NULL:CAPS"><code class="literal">NULL</code></a> if the group contains no
+, or <code class="literal">NULL</code> if the group contains no
 window. The list should not be modified nor freed, as it is owned by
 <em class="parameter"><code>class_group</code></em>
 . </p>
@@ -432,7 +432,7 @@ directly accessed.</p>
 <a name="WnckClassGroup-icon-changed"></a><h3>The <code class="literal">“icon-changed”</code> signal</h3>
 <pre class="programlisting"><span class="returnvalue">void</span>
 user_function (<a class="link" href="WnckClassGroup.html" title="WnckClassGroup"><span class="type">WnckClassGroup</span></a> *class_group,
-               <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>        user_data)</pre>
+               <span class="type">gpointer</span>        user_data)</pre>
 <p>Emitted when the icon of <em class="parameter"><code>class_group</code></em>
  changes.</p>
 <div class="refsect3">
@@ -457,14 +457,14 @@ user_function (<a class="link" href="WnckClassGroup.html" title="WnckClassGroup"
 </tbody>
 </table></div>
 </div>
-<p>Flags: <a href="/usr/share/gtk-doc/html/gobjectgobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+<p>Flags: Run Last</p>
 </div>
 <hr>
 <div class="refsect2">
 <a name="WnckClassGroup-name-changed"></a><h3>The <code class="literal">“name-changed”</code> signal</h3>
 <pre class="programlisting"><span class="returnvalue">void</span>
 user_function (<a class="link" href="WnckClassGroup.html" title="WnckClassGroup"><span class="type">WnckClassGroup</span></a> *class_group,
-               <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>        user_data)</pre>
+               <span class="type">gpointer</span>        user_data)</pre>
 <p>Emitted when the name of <em class="parameter"><code>class_group</code></em>
  changes.</p>
 <div class="refsect3">
@@ -489,7 +489,7 @@ user_function (<a class="link" href="WnckClassGroup.html" title="WnckClassGroup"
 </tbody>
 </table></div>
 </div>
-<p>Flags: <a href="/usr/share/gtk-doc/html/gobjectgobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+<p>Flags: Run Last</p>
 </div>
 </div>
 <div class="refsect1">

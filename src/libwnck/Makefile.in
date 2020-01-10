@@ -107,16 +107,32 @@ noinst_PROGRAMS = test-pager$(EXEEXT) test-wnck$(EXEEXT) \
 @HAVE_INTROSPECTION_TRUE@am__append_4 = $(gir_DATA) $(typelib_DATA)
 subdir = libwnck
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/gtk-doc.m4 \
-	$(top_srcdir)/m4/intltool.m4 $(top_srcdir)/m4/libtool.m4 \
-	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
-	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
-	$(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_append_compile_flags.m4 \
+	$(top_srcdir)/m4/ax_append_flag.m4 \
+	$(top_srcdir)/m4/ax_append_link_flags.m4 \
+	$(top_srcdir)/m4/ax_check_compile_flag.m4 \
+	$(top_srcdir)/m4/ax_check_enable_debug.m4 \
+	$(top_srcdir)/m4/ax_check_link_flag.m4 \
+	$(top_srcdir)/m4/ax_compiler_flags.m4 \
+	$(top_srcdir)/m4/ax_compiler_flags_cflags.m4 \
+	$(top_srcdir)/m4/ax_compiler_flags_gir.m4 \
+	$(top_srcdir)/m4/ax_compiler_flags_ldflags.m4 \
+	$(top_srcdir)/m4/ax_is_release.m4 \
+	$(top_srcdir)/m4/ax_require_defined.m4 \
+	$(top_srcdir)/m4/gettext.m4 $(top_srcdir)/m4/gtk-doc.m4 \
+	$(top_srcdir)/m4/iconv.m4 $(top_srcdir)/m4/intlmacosx.m4 \
+	$(top_srcdir)/m4/introspection.m4 $(top_srcdir)/m4/lib-ld.m4 \
+	$(top_srcdir)/m4/lib-link.m4 $(top_srcdir)/m4/lib-prefix.m4 \
+	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
+	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
+	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/m4/nls.m4 \
+	$(top_srcdir)/m4/pkg.m4 $(top_srcdir)/m4/po.m4 \
+	$(top_srcdir)/m4/progtest.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(libwnckinclude_HEADERS) \
 	$(am__DIST_COMMON)
-mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
+mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES = version.h
 CONFIG_CLEAN_VPATH_FILES =
@@ -155,20 +171,21 @@ am__DEPENDENCIES_1 =
 libwnck_3_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__objects_1 =
-am__objects_2 = $(am__objects_1)
-am__objects_3 = libwnck_3_la-wnck-enum-types.lo
-am__objects_4 = libwnck_3_la-application.lo \
+am__objects_2 = libwnck_3_la-wnck-enum-types.lo \
+	libwnck_3_la-wnck-resources.lo $(am__objects_1)
+am__objects_3 = libwnck_3_la-application.lo \
 	libwnck_3_la-class-group.lo libwnck_3_la-pager.lo \
 	libwnck_3_la-screen.lo libwnck_3_la-selector.lo \
 	libwnck_3_la-tasklist.lo libwnck_3_la-util.lo \
 	libwnck_3_la-window.lo libwnck_3_la-window-action-menu.lo \
 	libwnck_3_la-workspace.lo
-am__objects_5 = libwnck_3_la-pager-accessible.lo \
+am__objects_4 = libwnck_3_la-pager-accessible.lo \
 	libwnck_3_la-pager-accessible-factory.lo \
 	libwnck_3_la-workspace-accessible.lo \
 	libwnck_3_la-workspace-accessible-factory.lo
 am_libwnck_3_la_OBJECTS = $(am__objects_2) $(am__objects_3) \
-	$(am__objects_4) libwnck_3_la-xutils.lo $(am__objects_5)
+	libwnck_3_la-xutils.lo libwnck_3_la-wnck-image-menu-item.lo \
+	$(am__objects_4)
 libwnck_3_la_OBJECTS = $(am_libwnck_3_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -224,7 +241,7 @@ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 = 
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
-depcomp = $(SHELL) $(top_srcdir)/depcomp
+depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
@@ -282,10 +299,9 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/version.h.in \
-	$(top_srcdir)/depcomp $(top_srcdir)/mkinstalldirs
+	$(top_srcdir)/build-aux/depcomp
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
-ALL_LINGUAS = @ALL_LINGUAS@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
@@ -293,18 +309,14 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
-CATALOGS = @CATALOGS@
-CATOBJEXT = @CATOBJEXT@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
-DATADIRNAME = @DATADIRNAME@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
-DISABLE_DEPRECATED = @DISABLE_DEPRECATED@
 DISABLE_DEPRECATED_CFLAGS = @DISABLE_DEPRECATED_CFLAGS@
 DLLTOOL = @DLLTOOL@
 DSYMUTIL = @DSYMUTIL@
@@ -315,10 +327,11 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
-GDK_PIXBUF_CSOURCE = @GDK_PIXBUF_CSOURCE@
+GETTEXT_MACRO_VERSION = @GETTEXT_MACRO_VERSION@
 GETTEXT_PACKAGE = @GETTEXT_PACKAGE@
-GMOFILES = @GMOFILES@
+GLIB_COMPILE_RESOURCES = @GLIB_COMPILE_RESOURCES@
 GMSGFMT = @GMSGFMT@
+GMSGFMT_015 = @GMSGFMT_015@
 GREP = @GREP@
 GTKDOC_CHECK = @GTKDOC_CHECK@
 GTKDOC_CHECK_PATH = @GTKDOC_CHECK_PATH@
@@ -332,16 +345,8 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
-INSTOBJEXT = @INSTOBJEXT@
 INTLLIBS = @INTLLIBS@
-INTLTOOL_EXTRACT = @INTLTOOL_EXTRACT@
-INTLTOOL_MERGE = @INTLTOOL_MERGE@
-INTLTOOL_PERL = @INTLTOOL_PERL@
-INTLTOOL_UPDATE = @INTLTOOL_UPDATE@
-INTLTOOL_V_MERGE = @INTLTOOL_V_MERGE@
-INTLTOOL_V_MERGE_OPTIONS = @INTLTOOL_V_MERGE_OPTIONS@
-INTLTOOL__v_MERGE_ = @INTLTOOL__v_MERGE_@
-INTLTOOL__v_MERGE_0 = @INTLTOOL__v_MERGE_0@
+INTL_MACOSX_LIBS = @INTL_MACOSX_LIBS@
 INTROSPECTION_CFLAGS = @INTROSPECTION_CFLAGS@
 INTROSPECTION_COMPILER = @INTROSPECTION_COMPILER@
 INTROSPECTION_GENERATE = @INTROSPECTION_GENERATE@
@@ -352,6 +357,8 @@ INTROSPECTION_SCANNER = @INTROSPECTION_SCANNER@
 INTROSPECTION_TYPELIBDIR = @INTROSPECTION_TYPELIBDIR@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
+LIBICONV = @LIBICONV@
+LIBINTL = @LIBINTL@
 LIBM = @LIBM@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -363,15 +370,15 @@ LIBWNCK_LIBS = @LIBWNCK_LIBS@
 LIBWNCK_REVISION = @LIBWNCK_REVISION@
 LIPO = @LIPO@
 LN_S = @LN_S@
+LTLIBICONV = @LTLIBICONV@
+LTLIBINTL = @LTLIBINTL@
 LTLIBOBJS = @LTLIBOBJS@
 LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
-MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
-MKINSTALLDIRS = @MKINSTALLDIRS@
 MSGFMT = @MSGFMT@
-MSGFMT_OPTS = @MSGFMT_OPTS@
+MSGFMT_015 = @MSGFMT_015@
 MSGMERGE = @MSGMERGE@
 NM = @NM@
 NMEDIT = @NMEDIT@
@@ -390,10 +397,7 @@ PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
 PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
 PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
-POFILES = @POFILES@
 POSUB = @POSUB@
-PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
-PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
@@ -405,11 +409,15 @@ STRIP = @STRIP@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
 WARN_CFLAGS = @WARN_CFLAGS@
+WARN_LDFLAGS = @WARN_LDFLAGS@
+WARN_SCANNERFLAGS = @WARN_SCANNERFLAGS@
 WNCK_MAJOR_VERSION = @WNCK_MAJOR_VERSION@
 WNCK_MICRO_VERSION = @WNCK_MICRO_VERSION@
 WNCK_MINOR_VERSION = @WNCK_MINOR_VERSION@
 X11_PACKAGE = @X11_PACKAGE@
 XGETTEXT = @XGETTEXT@
+XGETTEXT_015 = @XGETTEXT_015@
+XGETTEXT_EXTRA_OPTIONS = @XGETTEXT_EXTRA_OPTIONS@
 XLIB_CFLAGS = @XLIB_CFLAGS@
 XLIB_LIBS = @XLIB_LIBS@
 XMKMF = @XMKMF@
@@ -451,8 +459,6 @@ htmldir = @htmldir@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
-intltool__v_merge_options_ = @intltool__v_merge_options_@
-intltool__v_merge_options_0 = @intltool__v_merge_options_0@
 libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
@@ -473,14 +479,14 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-wncklocaledir = @wncklocaledir@
+NULL = 
 lib_LTLIBRARIES = libwnck-3.la
 AM_CPPFLAGS = \
 	$(LIBWNCK_CFLAGS)			\
 	-I$(top_srcdir)				\
 	-I$(top_builddir)			\
 	-DWNCK_I_KNOW_THIS_IS_UNSTABLE		\
-	-DWNCK_LOCALEDIR=\"$(wncklocaledir)\"	\
+	-DWNCK_LOCALEDIR=\"$(localedir)\"	\
 	$(DISABLE_DEPRECATED_CFLAGS)
 
 AM_CFLAGS = $(WARN_CFLAGS)
@@ -497,11 +503,10 @@ wnck_headers = \
 	window-action-menu.h	\
 	workspace.h
 
-wnck_built_installed_headers = wnck-enum-types.h
 libwnckincludedir = $(includedir)/libwnck-3.0/libwnck
 libwnckinclude_HEADERS = \
 	$(wnck_headers)			\
-	$(wnck_built_installed_headers)	\
+	wnck-enum-types.h \
 	version.h
 
 
@@ -528,15 +533,14 @@ wnck_accessibility_files = \
 	workspace-accessible-factory.c		\
 	workspace-accessible-factory.h
 
-wnck_built_headers = $(wnck_built_installed_headers) inlinepixbufs.h
-wnck_built_cfiles = wnck-enum-types.c
 libwnck_3_la_SOURCES = \
-	$(wnck_built_headers)	\
-	$(wnck_built_cfiles)	\
+	$(BUILT_SOURCES) \
 	$(wnck_sources)		\
 	private.h		\
 	xutils.c		\
 	xutils.h		\
+	wnck-image-menu-item.c \
+	wnck-image-menu-item-private.h \
 	$(wnck_accessibility_files)
 
 libwnck_3_la_CPPFLAGS = \
@@ -554,7 +558,10 @@ libwnck_3_la_LIBADD = \
 libwnck_3_la_LDFLAGS = \
 	-version-info $(LIBWNCK_CURRENT):$(LIBWNCK_REVISION):$(LIBWNCK_AGE)	\
 	-no-undefined								\
-	-export-symbols-regex "^[^_].*"
+	-export-symbols-regex "^[^_].*" \
+	$(WARN_LDFLAGS) \
+	$(AM_LDFLAGS) \
+	$(NULL)
 
 wnckprop_SOURCES = wnckprop.c
 wnck_urgency_monitor_SOURCES = wnck-urgency-monitor.c
@@ -572,15 +579,20 @@ test_selector_LDADD = $(LIBWNCK_LIBS) ./$(lib_LTLIBRARIES)
 test_pager_LDADD = $(LIBWNCK_LIBS) ./$(lib_LTLIBRARIES)
 test_urgent_LDADD = $(LIBWNCK_LIBS)
 test_shutdown_LDADD = $(LIBWNCK_LIBS) ./$(lib_LTLIBRARIES)
-inlinepixbufs_SOURCES = default_icon.png
-inlinepixbufs_pairs = \
-	default_icon_data $(srcdir)/default_icon.png
+BUILT_SOURCES = \
+	wnck-enum-types.c \
+	wnck-enum-types.h \
+	wnck-resources.c \
+	wnck-resources.h \
+	$(NULL)
 
-CLEANFILES = $(wnck_built_cfiles) $(wnck_built_headers) \
-	$(am__append_4)
+CLEANFILES = $(BUILT_SOURCES) $(NULL) $(am__append_4)
 EXTRA_DIST = \
-	$(inlinepixbufs_SOURCES)	\
-	version.h.in
+	default_icon.png \
+	wnck.css \
+	wnck.gresource.xml \
+	version.h.in \
+	$(NULL)
 
 INTROSPECTION_GIRS = $(am__append_3)
 INTROSPECTION_SCANNER_ARGS = --warn-all --add-include-path=$(srcdir) --c-include="libwnck/libwnck.h"
@@ -589,17 +601,18 @@ INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
 @HAVE_INTROSPECTION_TRUE@Wnck_3_0_gir_INCLUDES = GObject-2.0 GdkPixbuf-2.0 Gtk-3.0
 @HAVE_INTROSPECTION_TRUE@Wnck_3_0_gir_CFLAGS = $(libwnck_3_la_CPPFLAGS)
 @HAVE_INTROSPECTION_TRUE@Wnck_3_0_gir_LIBS = libwnck-3.la
-@HAVE_INTROSPECTION_TRUE@Wnck_3_0_gir_SCANNERFLAGS = --pkg-export=libwnck-3.0
+@HAVE_INTROSPECTION_TRUE@Wnck_3_0_gir_SCANNERFLAGS = --pkg-export=libwnck-3.0 $(WARN_SCANNERFLAGS)
 @HAVE_INTROSPECTION_TRUE@Wnck_3_0_gir_FILES = $(introspection_sources)
 @HAVE_INTROSPECTION_TRUE@girdir = $(INTROSPECTION_GIRDIR)
 @HAVE_INTROSPECTION_TRUE@gir_DATA = $(INTROSPECTION_GIRS)
 @HAVE_INTROSPECTION_TRUE@typelibdir = $(INTROSPECTION_TYPELIBDIR)
 @HAVE_INTROSPECTION_TRUE@typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
-all: all-am
+all: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .lo .o .obj
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -623,9 +636,9 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 
-$(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
+$(top_srcdir)/configure:  $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-$(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
+$(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
 version.h: $(top_builddir)/config.status $(srcdir)/version.h.in
@@ -777,6 +790,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwnck_3_la-window-action-menu.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwnck_3_la-window.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwnck_3_la-wnck-enum-types.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwnck_3_la-wnck-image-menu-item.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwnck_3_la-wnck-resources.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwnck_3_la-workspace-accessible-factory.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwnck_3_la-workspace-accessible.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwnck_3_la-workspace.Plo@am__quote@
@@ -817,6 +832,13 @@ libwnck_3_la-wnck-enum-types.lo: wnck-enum-types.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='wnck-enum-types.c' object='libwnck_3_la-wnck-enum-types.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwnck_3_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libwnck_3_la-wnck-enum-types.lo `test -f 'wnck-enum-types.c' || echo '$(srcdir)/'`wnck-enum-types.c
+
+libwnck_3_la-wnck-resources.lo: wnck-resources.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwnck_3_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libwnck_3_la-wnck-resources.lo -MD -MP -MF $(DEPDIR)/libwnck_3_la-wnck-resources.Tpo -c -o libwnck_3_la-wnck-resources.lo `test -f 'wnck-resources.c' || echo '$(srcdir)/'`wnck-resources.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libwnck_3_la-wnck-resources.Tpo $(DEPDIR)/libwnck_3_la-wnck-resources.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='wnck-resources.c' object='libwnck_3_la-wnck-resources.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwnck_3_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libwnck_3_la-wnck-resources.lo `test -f 'wnck-resources.c' || echo '$(srcdir)/'`wnck-resources.c
 
 libwnck_3_la-application.lo: application.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwnck_3_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libwnck_3_la-application.lo -MD -MP -MF $(DEPDIR)/libwnck_3_la-application.Tpo -c -o libwnck_3_la-application.lo `test -f 'application.c' || echo '$(srcdir)/'`application.c
@@ -894,6 +916,13 @@ libwnck_3_la-xutils.lo: xutils.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='xutils.c' object='libwnck_3_la-xutils.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwnck_3_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libwnck_3_la-xutils.lo `test -f 'xutils.c' || echo '$(srcdir)/'`xutils.c
+
+libwnck_3_la-wnck-image-menu-item.lo: wnck-image-menu-item.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwnck_3_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libwnck_3_la-wnck-image-menu-item.lo -MD -MP -MF $(DEPDIR)/libwnck_3_la-wnck-image-menu-item.Tpo -c -o libwnck_3_la-wnck-image-menu-item.lo `test -f 'wnck-image-menu-item.c' || echo '$(srcdir)/'`wnck-image-menu-item.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libwnck_3_la-wnck-image-menu-item.Tpo $(DEPDIR)/libwnck_3_la-wnck-image-menu-item.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='wnck-image-menu-item.c' object='libwnck_3_la-wnck-image-menu-item.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwnck_3_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libwnck_3_la-wnck-image-menu-item.lo `test -f 'wnck-image-menu-item.c' || echo '$(srcdir)/'`wnck-image-menu-item.c
 
 libwnck_3_la-pager-accessible.lo: pager-accessible.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwnck_3_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libwnck_3_la-pager-accessible.lo -MD -MP -MF $(DEPDIR)/libwnck_3_la-pager-accessible.Tpo -c -o libwnck_3_la-pager-accessible.lo `test -f 'pager-accessible.c' || echo '$(srcdir)/'`pager-accessible.c
@@ -1075,7 +1104,8 @@ distdir: $(DISTFILES)
 	  fi; \
 	done
 check-am: all-am
-check: check-am
+check: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) check-am
 all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(DATA) $(HEADERS)
 install-binPROGRAMS: install-libLTLIBRARIES
 
@@ -1083,7 +1113,8 @@ installdirs:
 	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(girdir)" "$(DESTDIR)$(typelibdir)" "$(DESTDIR)$(libwnckincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
-install: install-am
+install: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-am
 install-exec: install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
@@ -1114,6 +1145,7 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
@@ -1188,7 +1220,7 @@ uninstall-am: uninstall-binPROGRAMS uninstall-girDATA \
 	uninstall-libLTLIBRARIES uninstall-libwnckincludeHEADERS \
 	uninstall-typelibDATA
 
-.MAKE: install-am install-strip
+.MAKE: all check install install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am check check-am clean \
 	clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
@@ -1211,8 +1243,6 @@ uninstall-am: uninstall-binPROGRAMS uninstall-girDATA \
 
 .PRECIOUS: Makefile
 
-
-$(libwnck_3_la_OBJECTS): $(wnck_built_headers)
 
 wnck-enum-types.h: $(wnck_headers)
 	$(AM_V_GEN)glib-mkenums \
@@ -1243,8 +1273,9 @@ wnck-enum-types.c: $(wnck_headers)
 		--vtail "  return type;\n}\n\n" \
 		$^ > $@
 
-inlinepixbufs.h: $(inlinepixbufs_SOURCES)
-	$(AM_V_GEN)$(GDK_PIXBUF_CSOURCE) --raw --build-list $(inlinepixbufs_pairs) > $@
+wnck-resources.h wnck-resources.c: wnck.gresource.xml \
+	$(shell $(GLIB_COMPILE_RESOURCES) --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/wnck.gresource.xml)
+	$(AM_V_GEN) $(GLIB_COMPILE_RESOURCES) --target=$@ --sourcedir=$(srcdir) --generate --c-name libwnck $<
 
 # Introspection
 -include $(INTROSPECTION_MAKEFILE)

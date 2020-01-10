@@ -65,14 +65,27 @@
 <p>
       For instance, the following would work in Python:
       </p>
-<div class="informalexample"><pre class="programlisting">
-from gi.repository import Wnck
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2
+3
+4
+5
+6</pre></td>
+        <td class="listing_code"><pre class="programlisting">from gi<span class="gtkdoc opt">.</span>repository import Wnck
 
-screen = Wnck.Screen.get_default()
-[...]
-screen = None
-Wnck.Shutdown()
-       </pre></div>
+screen <span class="gtkdoc opt">=</span> Wnck<span class="gtkdoc opt">.</span>Screen<span class="gtkdoc opt">.</span><span class="function">get_default</span><span class="gtkdoc opt">()</span>
+<span class="gtkdoc opt">[...]</span>
+screen <span class="gtkdoc opt">=</span> None
+Wnck<span class="gtkdoc opt">.</span><span class="function">Shutdown</span><span class="gtkdoc opt">()</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
 <p>
      </p>
 </div>
@@ -97,96 +110,186 @@ Wnck.Shutdown()
      This first example is a small utility listing all windows on the current screen. As this is all done synchronously, without using a main event loop, we use <a class="link" href="WnckScreen.html#wnck-screen-force-update" title="wnck_screen_force_update ()"><code class="function">wnck_screen_force_update()</code></a> to explicitly fetch the information needed for the <a class="link" href="WnckScreen.html" title="WnckScreen"><span class="type">WnckScreen</span></a> object.
 
      </p>
-<div class="informalexample"><pre class="programlisting">
-       #include &lt;libwnck/libwnck.h&gt;
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27</pre></td>
+        <td class="listing_code"><pre class="programlisting"><span class="gtkdoc ppc">#include &lt;libwnck/libwnck.h&gt;</span>
 
-int
-main (int    argc,
-      char **argv)
-{
-  WnckScreen *screen;
-  WnckWindow *active_window;
-  GList *window_l;
+<span class="gtkdoc kwb">int</span>
+<span class="function">main</span> <span class="gtkdoc opt">(</span><span class="gtkdoc kwb">int</span>    argc<span class="gtkdoc opt">,</span>
+      <span class="gtkdoc kwb">char</span> <span class="gtkdoc opt">**</span>argv<span class="gtkdoc opt">)</span>
+<span class="gtkdoc opt">{</span>
+  WnckScreen <span class="gtkdoc opt">*</span>screen<span class="gtkdoc opt">;</span>
+  WnckWindow <span class="gtkdoc opt">*</span>active_window<span class="gtkdoc opt">;</span>
+  GList <span class="gtkdoc opt">*</span>window_l<span class="gtkdoc opt">;</span>
 
-  gdk_init (&amp;argc, &amp;argv);
+  <span class="function">gdk_init</span> <span class="gtkdoc opt">(&amp;</span>argc<span class="gtkdoc opt">, &amp;</span>argv<span class="gtkdoc opt">);</span>
 
-  screen = wnck_screen_get_default ();
+  screen <span class="gtkdoc opt">=</span> <span class="function"><a href="WnckScreen.html#wnck-screen-get-default">wnck_screen_get_default</a></span> <span class="gtkdoc opt">();</span>
 
-  wnck_screen_force_update (screen);
+  <span class="function"><a href="WnckScreen.html#wnck-screen-force-update">wnck_screen_force_update</a></span> <span class="gtkdoc opt">(</span>screen<span class="gtkdoc opt">);</span>
 
-  active_window = wnck_screen_get_active_window (screen);
+  active_window <span class="gtkdoc opt">=</span> <span class="function"><a href="WnckScreen.html#wnck-screen-get-active-window">wnck_screen_get_active_window</a></span> <span class="gtkdoc opt">(</span>screen<span class="gtkdoc opt">);</span>
 
-  for (window_l = wnck_screen_get_windows (screen); window_l != NULL; window_l = window_l-&gt;next)
-    {
-      WnckWindow *window = WNCK_WINDOW (window_l-&gt;data);
-      g_print ("%s%s\n", wnck_window_get_name (window),
-                         window == active_window ? " (active)" : "");
-    }
+  <span class="keyword">for</span> <span class="gtkdoc opt">(</span>window_l <span class="gtkdoc opt">=</span> <span class="function"><a href="WnckScreen.html#wnck-screen-get-windows">wnck_screen_get_windows</a></span> <span class="gtkdoc opt">(</span>screen<span class="gtkdoc opt">);</span> window_l <span class="gtkdoc opt">!=</span> NULL<span class="gtkdoc opt">;</span> window_l <span class="gtkdoc opt">=</span> window_l<span class="gtkdoc opt">-&gt;</span>next<span class="gtkdoc opt">)</span>
+    <span class="gtkdoc opt">{</span>
+      WnckWindow <span class="gtkdoc opt">*</span>window <span class="gtkdoc opt">=</span> <span class="function">WNCK_WINDOW</span> <span class="gtkdoc opt">(</span>window_l<span class="gtkdoc opt">-&gt;</span>data<span class="gtkdoc opt">);</span>
+      <span class="function">g_print</span> <span class="gtkdoc opt">(</span><span class="string">&quot;%s%s</span><span class="gtkdoc esc">\n</span><span class="string">&quot;</span><span class="gtkdoc opt">,</span> <span class="function"><a href="WnckWindow.html#wnck-window-get-name">wnck_window_get_name</a></span> <span class="gtkdoc opt">(</span>window<span class="gtkdoc opt">),</span>
+                  window <span class="gtkdoc opt">==</span> active_window <span class="gtkdoc opt">?</span> <span class="string">&quot; (active)&quot;</span> <span class="gtkdoc opt">:</span> <span class="string">&quot;&quot;</span><span class="gtkdoc opt">);</span>
+    <span class="gtkdoc opt">}</span>
 
-  return 0;
-}
+  <span class="keyword">return</span> <span class="number">0</span><span class="gtkdoc opt">;</span>
+<span class="gtkdoc opt">}</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
-      </pre></div>
 <p>
     </p>
 <p><a name="getting-started.examples.lazy-initialization"></a>
      The second example is similar, except that we use a main event loop. We connect to the <a class="link" href="WnckScreen.html#WnckScreen-window-opened" title="The “window-opened” signal"><code class="function">"window-opened"</code></a> signal to print information about new <a class="link" href="WnckScreen.html" title="WnckScreen"><span class="type">WnckScreen</span></a> objects. Here, we use the fact that the <a class="link" href="WnckScreen.html#WnckScreen-window-opened" title="The “window-opened” signal"><code class="function">"window-opened"</code></a> signal is emitted for all existing windows during the lazy initialization of the <a class="link" href="WnckScreen.html" title="WnckScreen"><span class="type">WnckScreen</span></a> object, in order to achieve an output similar to the previous example. However, during the lazy initialization, the active window is not necessarily known yet and we cannot tell whether the opened window is the currently active one. We connect to the <a class="link" href="WnckScreen.html#WnckScreen-active-window-changed" title="The “active-window-changed” signal"><code class="function">"active-window-changed"</code></a> signal to determine the active window when this information becomes available.
 
      </p>
-<div class="informalexample"><pre class="programlisting">
-       #include &lt;libwnck/libwnck.h&gt;
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51</pre></td>
+        <td class="listing_code"><pre class="programlisting"><span class="gtkdoc ppc">#include &lt;libwnck/libwnck.h&gt;</span>
 
-static void
-on_window_opened (WnckScreen *screen,
-                  WnckWindow *window,
-                  gpointer    data)
-{
-  /* Note: when this event is emitted while screen is initialized, there is no
-   * active window yet. */
+<span class="gtkdoc kwb">static void</span>
+<span class="function">on_window_opened</span> <span class="gtkdoc opt">(</span>WnckScreen <span class="gtkdoc opt">*</span>screen<span class="gtkdoc opt">,</span>
+           WnckWindow <span class="gtkdoc opt">*</span>window<span class="gtkdoc opt">,</span>
+           gpointer    data<span class="gtkdoc opt">)</span>
+<span class="gtkdoc opt">{</span>
+  <span class="comment">/* Note: when this event is emitted while screen is initialized, there is no</span>
+<span class="comment">   * active window yet. */</span>
 
-  g_print ("%s\n", wnck_window_get_name (window));
-}
+  <span class="function">g_print</span> <span class="gtkdoc opt">(</span><span class="string">&quot;%s</span><span class="gtkdoc esc">\n</span><span class="string">&quot;</span><span class="gtkdoc opt">,</span> <span class="function"><a href="WnckWindow.html#wnck-window-get-name">wnck_window_get_name</a></span> <span class="gtkdoc opt">(</span>window<span class="gtkdoc opt">));</span>
+<span class="gtkdoc opt">}</span>
 
-static void
-on_active_window_changed (WnckScreen *screen,
-                          WnckWindow *previously_active_window,
-                          gpointer    data)
-{
-  WnckWindow *active_window;
+<span class="gtkdoc kwb">static void</span>
+<span class="function">on_active_window_changed</span> <span class="gtkdoc opt">(</span>WnckScreen <span class="gtkdoc opt">*</span>screen<span class="gtkdoc opt">,</span>
+                   WnckWindow <span class="gtkdoc opt">*</span>previously_active_window<span class="gtkdoc opt">,</span>
+                   gpointer    data<span class="gtkdoc opt">)</span>
+<span class="gtkdoc opt">{</span>
+  WnckWindow <span class="gtkdoc opt">*</span>active_window<span class="gtkdoc opt">;</span>
 
-  active_window = wnck_screen_get_active_window (screen);
+  active_window <span class="gtkdoc opt">=</span> <span class="function"><a href="WnckScreen.html#wnck-screen-get-active-window">wnck_screen_get_active_window</a></span> <span class="gtkdoc opt">(</span>screen<span class="gtkdoc opt">);</span>
 
-  if (active_window)
-    g_print ("active: %s\n", wnck_window_get_name (active_window));
-  else
-    g_print ("no active window\n");
-}
+  <span class="keyword">if</span> <span class="gtkdoc opt">(</span>active_window<span class="gtkdoc opt">)</span>
+    <span class="function">g_print</span> <span class="gtkdoc opt">(</span><span class="string">&quot;active: %s</span><span class="gtkdoc esc">\n</span><span class="string">&quot;</span><span class="gtkdoc opt">,</span> <span class="function"><a href="WnckWindow.html#wnck-window-get-name">wnck_window_get_name</a></span> <span class="gtkdoc opt">(</span>active_window<span class="gtkdoc opt">));</span>
+  <span class="keyword">else</span>
+    <span class="function">g_print</span> <span class="gtkdoc opt">(</span><span class="string">&quot;no active window</span><span class="gtkdoc esc">\n</span><span class="string">&quot;</span><span class="gtkdoc opt">);</span>
+<span class="gtkdoc opt">}</span>
 
-int
-main (int    argc,
-      char **argv)
-{
-  GMainLoop *loop;
-  WnckScreen *screen;
+<span class="gtkdoc kwb">int</span>
+<span class="function">main</span> <span class="gtkdoc opt">(</span><span class="gtkdoc kwb">int</span>    argc<span class="gtkdoc opt">,</span>
+      <span class="gtkdoc kwb">char</span> <span class="gtkdoc opt">**</span>argv<span class="gtkdoc opt">)</span>
+<span class="gtkdoc opt">{</span>
+  GMainLoop <span class="gtkdoc opt">*</span>loop<span class="gtkdoc opt">;</span>
+  WnckScreen <span class="gtkdoc opt">*</span>screen<span class="gtkdoc opt">;</span>
 
-  gdk_init (&amp;argc, &amp;argv);
+  <span class="function">gdk_init</span> <span class="gtkdoc opt">(&amp;</span>argc<span class="gtkdoc opt">, &amp;</span>argv<span class="gtkdoc opt">);</span>
 
-  loop = g_main_loop_new (NULL, FALSE);
-  screen = wnck_screen_get_default ();
+  loop <span class="gtkdoc opt">=</span> <span class="function">g_main_loop_new</span> <span class="gtkdoc opt">(</span>NULL<span class="gtkdoc opt">,</span> FALSE<span class="gtkdoc opt">);</span>
+  screen <span class="gtkdoc opt">=</span> <span class="function"><a href="WnckScreen.html#wnck-screen-get-default">wnck_screen_get_default</a></span> <span class="gtkdoc opt">();</span>
 
-  g_signal_connect (screen, "window-opened",
-                    G_CALLBACK (on_window_opened), NULL);
-  g_signal_connect (screen, "active-window-changed",
-                    G_CALLBACK (on_active_window_changed), NULL);
+  <span class="function">g_signal_connect</span> <span class="gtkdoc opt">(</span>screen<span class="gtkdoc opt">,</span> <span class="string">&quot;window-opened&quot;</span><span class="gtkdoc opt">,</span>
+             <span class="function">G_CALLBACK</span> <span class="gtkdoc opt">(</span>on_window_opened<span class="gtkdoc opt">),</span> NULL<span class="gtkdoc opt">);</span>
+  <span class="function">g_signal_connect</span> <span class="gtkdoc opt">(</span>screen<span class="gtkdoc opt">,</span> <span class="string">&quot;active-window-changed&quot;</span><span class="gtkdoc opt">,</span>
+             <span class="function">G_CALLBACK</span> <span class="gtkdoc opt">(</span>on_active_window_changed<span class="gtkdoc opt">),</span> NULL<span class="gtkdoc opt">);</span>
 
-  g_main_loop_run (loop);
+  <span class="function">g_main_loop_run</span> <span class="gtkdoc opt">(</span>loop<span class="gtkdoc opt">);</span>
 
-  g_main_loop_unref (loop);
+  <span class="function">g_main_loop_unref</span> <span class="gtkdoc opt">(</span>loop<span class="gtkdoc opt">);</span>
 
-  return 0;
-}
+  <span class="keyword">return</span> <span class="number">0</span><span class="gtkdoc opt">;</span>
+<span class="gtkdoc opt">}</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
-      </pre></div>
 <p>
     </p>
 </div>

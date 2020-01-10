@@ -45,7 +45,7 @@
  */
 
 #define FALLBACK_NAME _("Untitled window")
-#define ALL_WORKSPACES (0xFFFFFFFF)
+#define ALL_WORKSPACES ((int) 0xFFFFFFFF)
 
 static GHashTable *window_hash = NULL;
 
@@ -182,8 +182,6 @@ enum {
   LAST_SIGNAL
 };
 
-static void wnck_window_init        (WnckWindow      *window);
-static void wnck_window_class_init  (WnckWindowClass *klass);
 static void wnck_window_finalize    (GObject        *object);
 
 static void emit_name_changed      (WnckWindow      *window);
@@ -2785,6 +2783,7 @@ update_state (WnckWindow *window)
       break;
 
     case WNCK_WINDOW_NORMAL:
+    default:
       break;
     }
 
@@ -2804,6 +2803,7 @@ update_state (WnckWindow *window)
     case WNCK_WINDOW_NORMAL:
     case WNCK_WINDOW_DIALOG:
     case WNCK_WINDOW_UTILITY:
+    default:
       break;
     }
 

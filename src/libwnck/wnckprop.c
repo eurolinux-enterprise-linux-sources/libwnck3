@@ -481,12 +481,12 @@ option_parse (const char  *option_name,
 static gboolean
 set_mode (int         new_mode,
           const char *option,
-          gboolean    list)
+          gboolean    use_list)
 {
   switch (mode)
     {
       case INVALID_MODE:
-        if (list)
+        if (use_list)
           g_assert_not_reached ();
 
         mode = new_mode;
@@ -494,7 +494,7 @@ set_mode (int         new_mode,
       case SCREEN_READ_MODE:
         if (new_mode == SCREEN_READ_MODE || new_mode == SCREEN_WRITE_MODE)
           mode = new_mode;
-        else if (list)
+        else if (use_list)
           mode = SCREEN_LIST_MODE;
         else
           {
@@ -526,7 +526,7 @@ set_mode (int         new_mode,
       case WORKSPACE_READ_MODE:
         if (new_mode == WORKSPACE_READ_MODE || new_mode == WORKSPACE_WRITE_MODE)
           mode = new_mode;
-        else if (list)
+        else if (use_list)
           mode = WORKSPACE_LIST_MODE;
         else
           {
@@ -558,7 +558,7 @@ set_mode (int         new_mode,
           }
         break;
       case APPLICATION_READ_MODE:
-        if (list)
+        if (use_list)
           mode = APPLICATION_LIST_MODE;
         else if (new_mode != APPLICATION_READ_MODE)
           {
@@ -580,7 +580,7 @@ set_mode (int         new_mode,
           }
         break;
       case CLASS_GROUP_READ_MODE:
-        if (list)
+        if (use_list)
           mode = CLASS_GROUP_LIST_MODE;
         else if (new_mode != CLASS_GROUP_READ_MODE)
           {
@@ -1711,8 +1711,8 @@ find_managed_window (Display *display,
   Window      parent;
   Window     *kids = NULL;
   WnckWindow *retval;
-  guint       nkids;
-  int         i, result;
+  guint       i, nkids;
+  int         result;
 
   if (wm_state_set (display, window))
     return wnck_window_get (window);
@@ -1754,7 +1754,7 @@ handle_button_press_event (Display *dpy, XIDeviceEvent *event)
 
 static GdkFilterReturn
 target_filter (GdkXEvent *gdk_xevent,
-               GdkEvent  *event,
+               GdkEvent  *gdk_event,
                gpointer   data)
 {
   XEvent *xevent = (XEvent *) gdk_xevent;
@@ -1789,58 +1789,38 @@ target_filter (GdkXEvent *gdk_xevent,
   return GDK_FILTER_CONTINUE;
 }
 
+static void
+prepare (GdkSeat   *seat,
+         GdkWindow *window,
+         gpointer   user_data)
+{
+  gdk_window_show_unraised (window);
+}
+
 static gboolean
 get_target (gpointer data)
 {
-  GdkDisplay       *display;
-  GdkGrabStatus     status;
-  GdkDeviceManager *dev_manager;
-  GdkDevice        *device;
-  GdkCursor        *cross;
-  GdkWindow        *root;
-  GList            *devices, *l;
+  GdkWindow *root;
+  GdkDisplay *display;
+  GdkSeat *seat;
+  GdkCursor *cross;
+  GdkSeatCapabilities caps;
+  GdkGrabStatus status;
 
-  display = gdk_display_get_default ();
-  dev_manager = gdk_display_get_device_manager (display);
   root = gdk_get_default_root_window ();
+  display = gdk_display_get_default ();
+  seat = gdk_display_get_default_seat (display);
+  cross = gdk_cursor_new_for_display (display, GDK_CROSS);
+  caps = GDK_SEAT_CAPABILITY_POINTER | GDK_SEAT_CAPABILITY_KEYBOARD;
 
   gdk_window_add_filter (root, (GdkFilterFunc) target_filter, NULL);
 
-  cross = gdk_cursor_new_for_display (display, GDK_CROSS);
-  device = gdk_device_manager_get_client_pointer (dev_manager);
-  status = gdk_device_grab (device, root, GDK_OWNERSHIP_WINDOW, TRUE,
-                            GDK_BUTTON_PRESS_MASK, cross, GDK_CURRENT_TIME);
+  status = gdk_seat_grab (seat, root, caps, TRUE, cross, NULL, prepare, NULL);
   g_object_unref (cross);
 
   if (status != GDK_GRAB_SUCCESS)
     {
-      g_warning ("Pointer grab failed.\n");
-      clean_up ();
-      return FALSE;
-    }
-
-  devices = gdk_device_manager_list_devices (dev_manager, GDK_DEVICE_TYPE_MASTER);
-
-  for (l = devices; l; l = l->next)
-    {
-      device = GDK_DEVICE (l->data);
-
-      if (gdk_device_get_source (device) != GDK_SOURCE_KEYBOARD)
-        continue;
-
-      status = gdk_device_grab (device, root, GDK_OWNERSHIP_NONE, TRUE,
-                                GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK, NULL,
-                                GDK_CURRENT_TIME);
-
-      if (status != GDK_GRAB_SUCCESS)
-        break;
-    }
-
-  g_list_free (devices);
-
-  if (status != GDK_GRAB_SUCCESS)
-    {
-      g_warning ("Keyboard grab failed.\n");
+      g_warning ("Seat grab failed.");
       clean_up ();
       return FALSE;
     }
@@ -1854,30 +1834,15 @@ static void
 clean_up (void)
 {
   GdkWindow *root;
-  GdkDeviceManager *dev_manager;
-  GdkDevice        *device;
-  GList            *devices, *l;
+  GdkDisplay *display;
+  GdkSeat *seat;
 
   root = gdk_get_default_root_window ();
-  dev_manager = gdk_display_get_device_manager (gdk_display_get_default ());
+  display = gdk_display_get_default ();
+  seat = gdk_display_get_default_seat (display);
+
   gdk_window_remove_filter (root, (GdkFilterFunc) target_filter, NULL);
-
-  device = gdk_device_manager_get_client_pointer (dev_manager);
-  gdk_device_ungrab (device, GDK_CURRENT_TIME);
-
-  devices = gdk_device_manager_list_devices (dev_manager, GDK_DEVICE_TYPE_MASTER);
-
-  for (l = devices; l; l = l->next)
-    {
-      device = GDK_DEVICE (l->data);
-
-      if (gdk_device_get_source (device) != GDK_SOURCE_KEYBOARD)
-        continue;
-
-      gdk_device_ungrab (device, GDK_CURRENT_TIME);
-    }
-
-  g_list_free (devices);
+  gdk_seat_ungrab (seat);
 
   gtk_main_quit ();
 }

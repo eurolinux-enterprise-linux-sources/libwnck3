@@ -30,7 +30,6 @@
 #include "screen.h"
 #include "window.h"
 #include "private.h"
-#include "inlinepixbufs.h"
 
 gboolean
 _wnck_get_cardinal (Screen *screen,
@@ -785,6 +784,9 @@ filter_func (GdkXEvent  *gdkxevent,
         }
 #endif /* HAVE_STARTUP_NOTIFICATION */
       break;
+
+    default:
+      break;
     }
 
   return GDK_FILTER_CONTINUE;
@@ -827,7 +829,7 @@ _wnck_xid_hash (gconstpointer v)
   gulong val = * (const gulong *) v;
 
   /* I'm not sure this works so well. */
-#if G_SIZEOF_LONG > 4
+#if GLIB_SIZEOF_LONG > 4
   return (guint) (val ^ (val >> 32));
 #else
   return val;
@@ -1449,7 +1451,7 @@ find_largest_sizes (gulong *data,
       w = data[0];
       h = data[1];
 
-      if (nitems < ((w * h) + 2))
+      if (nitems < ((gulong) (w * h) + 2))
         return FALSE; /* not enough data */
 
       *width = MAX (w, *width);
@@ -1505,7 +1507,7 @@ find_best_size (gulong  *data,
       w = data[0];
       h = data[1];
 
-      if (nitems < ((w * h) + 2))
+      if (nitems < ((gulong) (w * h) + 2))
         break; /* not enough data */
 
       if (best_start == NULL)
@@ -1709,7 +1711,7 @@ _wnck_cairo_surface_get_from_pixmap (Screen *screen,
       if (!XGetWindowAttributes (display, root_return, &attrs))
         goto TRAP_POP;
 
-      if (depth_ret == attrs.depth)
+      if (depth_ret == (unsigned int) attrs.depth)
 	{
 	  surface = cairo_xlib_surface_create (display,
 					       xpixmap,
@@ -2311,12 +2313,9 @@ static GdkPixbuf*
 default_icon_at_size (int width,
                       int height)
 {
-
   GdkPixbuf *base;
 
-  base = gdk_pixbuf_new_from_inline (-1, default_icon_data,
-                                     FALSE,
-                                     NULL);
+  base = gdk_pixbuf_new_from_resource ("/org/gnome/libwnck/default_icon.png", NULL);
 
   g_assert (base);
 
@@ -2353,15 +2352,15 @@ _wnck_get_fallback_icons (GdkPixbuf **iconp,
 {
   if (iconp)
     *iconp = default_icon_at_size (ideal_width > 0 ? ideal_width :
-                                   _wnck_get_default_icon_size (),
+                                   (int) _wnck_get_default_icon_size (),
                                    ideal_height > 0 ? ideal_height :
-                                   _wnck_get_default_icon_size ());
+                                   (int) _wnck_get_default_icon_size ());
 
   if (mini_iconp)
     *mini_iconp = default_icon_at_size (ideal_mini_width > 0 ? ideal_mini_width :
-                                        _wnck_get_default_mini_icon_size (),
+                                        (int) _wnck_get_default_mini_icon_size (),
                                         ideal_mini_height > 0 ? ideal_mini_height :
-                                        _wnck_get_default_mini_icon_size ());
+                                        (int) _wnck_get_default_mini_icon_size ());
 }
 
 

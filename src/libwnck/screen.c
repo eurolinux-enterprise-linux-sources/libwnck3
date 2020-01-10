@@ -151,8 +151,6 @@ enum {
   LAST_SIGNAL
 };
 
-static void wnck_screen_init        (WnckScreen      *screen);
-static void wnck_screen_class_init  (WnckScreenClass *klass);
 static void wnck_screen_finalize    (GObject         *object);
 
 static void update_client_list        (WnckScreen      *screen);
@@ -625,15 +623,20 @@ _wnck_screen_get_existing (int number)
  *
  * Gets the default #WnckScreen on the default display.
  *
- * Return value: (transfer none): the default #WnckScreen. The returned
- * #WnckScreen is owned by libwnck and must not be referenced or unreferenced.
+ * Return value: (transfer none) (nullable): the default #WnckScreen. The returned
+ * #WnckScreen is owned by libwnck and must not be referenced or unreferenced. This
+ * can return %NULL if not on X11.
  **/
 WnckScreen*
 wnck_screen_get_default (void)
 {
   int default_screen;
+  Display *default_display = _wnck_get_default_display ();
 
-  default_screen = DefaultScreen (_wnck_get_default_display ());
+  if (default_display == NULL)
+    return NULL;
+
+  default_screen = DefaultScreen (default_display);
 
   return wnck_screen_get (default_screen);
 }
@@ -869,7 +872,10 @@ _wnck_screen_get_gdk_screen (WnckScreen *screen)
   if (!gdkdisplay)
     return NULL;
 
-  return gdk_display_get_screen (gdkdisplay, screen->priv->number);
+  if (screen->priv->number != 0)
+    return NULL;
+
+  return gdk_display_get_default_screen (gdkdisplay);
 }
 
 /**
@@ -1214,6 +1220,8 @@ wnck_screen_calc_workspace_layout (WnckScreen          *screen,
               --r;
             }
         }
+      break;
+    default:
       break;
     }
 
@@ -1883,12 +1891,12 @@ update_viewport_settings (WnckScreen *screen)
               space = wnck_screen_get_workspace (screen, i);
               g_assert (space != NULL);
 
-	      /* p_coord[x] is unsigned, and thus >= 0 */
-              if (p_coord[x] > space_width - screen_width)
+              /* p_coord[x] is unsigned, and thus >= 0 */
+              if ((int) p_coord[x] > space_width - screen_width)
                 p_coord[x] = space_width - screen_width;
 
-	      /* p_coord[y] is unsigned, and thus >= 0 */
-              if (p_coord[y] > space_height - screen_height)
+              /* p_coord[y] is unsigned, and thus >= 0 */
+              if ((int) p_coord[y] > space_height - screen_height)
                 p_coord[y] = space_height - screen_height;
 
 	      if (_wnck_workspace_set_viewport (space,

@@ -25,7 +25,6 @@
 #include "util.h"
 #include "xutils.h"
 #include "private.h"
-#include "inlinepixbufs.h"
 #include <gdk/gdkx.h>
 #include <string.h>
 #ifdef HAVE_XRES
@@ -107,11 +106,7 @@ _wnck_print_resource_usage (WnckResourceUsage *usage)
 static WnckExtStatus
 wnck_init_resource_usage (GdkDisplay *gdisplay)
 {
-  int event, error;
-  Display *xdisplay;
   WnckExtStatus status;
-
-  xdisplay = GDK_DISPLAY_XDISPLAY (gdisplay);
 
   status = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (gdisplay),
                                                "wnck-xres-status"));
@@ -119,6 +114,9 @@ wnck_init_resource_usage (GdkDisplay *gdisplay)
   if (status == WNCK_EXT_UNKNOWN)
     {
 #ifdef HAVE_XRES
+      Display *xdisplay = GDK_DISPLAY_XDISPLAY (gdisplay);
+      int event, error;
+
       if (!XResQueryExtension (xdisplay, &event, &error))
         status = WNCK_EXT_MISSING;
       else
@@ -212,7 +210,7 @@ wnck_xid_read_resource_usage (GdkDisplay        *gdisplay,
    i = 0;
    while (i < n_types)
      {
-       int t = types[i].resource_type;
+       guint t = types[i].resource_type;
 
        if (t == pixmap_atom)
          usage->n_pixmaps += types[i].count;
@@ -311,7 +309,7 @@ wnck_find_pid_for_resource_r (Display *xdisplay,
   Window   dummy;
   Window  *children;
   guint    n_children;
-  int      i;
+  guint    i;
   gulong   found_pid = 0;
 
   while (gtk_events_pending ())
@@ -563,7 +561,7 @@ wnck_pid_read_resource_usage_no_cache (GdkDisplay        *gdisplay,
       tmp = windows;
       while (tmp != NULL)
         {
-          if (wnck_window_get_pid (tmp->data) == pid)
+          if (wnck_window_get_pid (tmp->data) == (int) pid)
             {
               wnck_xid_read_resource_usage (gdisplay,
                                             wnck_window_get_xid (tmp->data),
@@ -741,41 +739,21 @@ _wnck_get_default_mini_icon_size (void)
 void
 _make_gtk_label_bold (GtkLabel *label)
 {
-  PangoFontDescription *font_desc;
+  GtkStyleContext *context;
 
-  font_desc = pango_font_description_new ();
+  _wnck_ensure_fallback_style ();
 
-  pango_font_description_set_weight (font_desc,
-                                     PANGO_WEIGHT_BOLD);
-
-  /* This will only affect the weight of the font, the rest is
-   * from the current state of the widget, which comes from the
-   * theme or user prefs, since the font desc only has the
-   * weight flag turned on.
-   */
-  gtk_widget_override_font (GTK_WIDGET (label), font_desc);
-
-  pango_font_description_free (font_desc);
+  context = gtk_widget_get_style_context (GTK_WIDGET (label));
+  gtk_style_context_add_class (context, "wnck-needs-attention");
 }
 
 void
 _make_gtk_label_normal (GtkLabel *label)
 {
-  PangoFontDescription *font_desc;
+  GtkStyleContext *context;
 
-  font_desc = pango_font_description_new ();
-
-  pango_font_description_set_weight (font_desc,
-                                     PANGO_WEIGHT_NORMAL);
-
-  /* This will only affect the weight of the font, the rest is
-   * from the current state of the widget, which comes from the
-   * theme or user prefs, since the font desc only has the
-   * weight flag turned on.
-   */
-  gtk_widget_override_font (GTK_WIDGET (label), font_desc);
-
-  pango_font_description_free (font_desc);
+  context = gtk_widget_get_style_context (GTK_WIDGET (label));
+  gtk_style_context_remove_class (context, "wnck-needs-attention");
 }
 
 #ifdef HAVE_STARTUP_NOTIFICATION
@@ -808,9 +786,16 @@ _wnck_init (void)
 Display *
 _wnck_get_default_display (void)
 {
+  GdkDisplay *display = gdk_display_get_default ();
   /* FIXME: when we fix libwnck to not use the GDK default display, we will
    * need to fix wnckprop accordingly. */
-  return GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
+  if (!GDK_IS_X11_DISPLAY (display))
+    {
+      g_warning ("libwnck is designed to work in X11 only, no valid display found");
+      return NULL;
+    }
+
+  return GDK_DISPLAY_XDISPLAY (display);
 }
 
 /**
@@ -860,4 +845,27 @@ wnck_shutdown (void)
   xres_removeid = 0;
   wnck_pid_read_resource_usage_destroy_hash_table (NULL);
 #endif
+}
+
+void
+_wnck_ensure_fallback_style (void)
+{
+  static gboolean css_loaded = FALSE;
+  GtkCssProvider *provider;
+  guint priority;
+
+  if (css_loaded)
+    return;
+
+  provider = gtk_css_provider_new ();
+  gtk_css_provider_load_from_resource (provider, "/org/gnome/libwnck/wnck.css");
+
+  priority = GTK_STYLE_PROVIDER_PRIORITY_FALLBACK;
+  gtk_style_context_add_provider_for_screen (gdk_screen_get_default (),
+                                             GTK_STYLE_PROVIDER (provider),
+                                             priority);
+
+  g_object_unref (provider);
+
+  css_loaded = TRUE;
 }

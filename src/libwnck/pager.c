@@ -67,6 +67,7 @@ struct _WnckPagerPrivate
   WnckPagerDisplayMode display_mode;
   gboolean show_all_workspaces;
   GtkShadowType shadow_type;
+  gboolean wrap_on_scroll;
 
   GtkOrientation orientation;
   int workspace_size;
@@ -96,15 +97,12 @@ enum
   LAST_SIGNAL
 };
 
-
 #define POINT_IN_RECT(xcoord, ycoord, rect) \
  ((xcoord) >= (rect).x &&                   \
   (xcoord) <  ((rect).x + (rect).width) &&  \
   (ycoord) >= (rect).y &&                   \
   (ycoord) <  ((rect).y + (rect).height))
 
-static void wnck_pager_init        (WnckPager      *pager);
-static void wnck_pager_class_init  (WnckPagerClass *klass);
 static void wnck_pager_finalize    (GObject        *object);
 
 static void     wnck_pager_realize       (GtkWidget        *widget);
@@ -208,7 +206,7 @@ wnck_pager_init (WnckPager *pager)
 {
   int i;
   static const GtkTargetEntry targets[] = {
-    { "application/x-wnck-window-id", 0, 0}
+    { (gchar *) "application/x-wnck-window-id", 0, 0}
   };
 
   pager->priv = WNCK_PAGER_GET_PRIVATE (pager);
@@ -217,6 +215,7 @@ wnck_pager_init (WnckPager *pager)
   pager->priv->display_mode = WNCK_PAGER_DISPLAY_CONTENT;
   pager->priv->show_all_workspaces = TRUE;
   pager->priv->shadow_type = GTK_SHADOW_NONE;
+  pager->priv->wrap_on_scroll = FALSE;
 
   pager->priv->orientation = GTK_ORIENTATION_HORIZONTAL;
   pager->priv->workspace_size = 48;
@@ -267,9 +266,7 @@ wnck_pager_class_init (WnckPagerClass *klass)
   widget_class->drag_end = wnck_pager_drag_end;
   widget_class->query_tooltip = wnck_pager_query_tooltip;
 
-#if GTK_CHECK_VERSION (3, 19, 1)
   gtk_widget_class_set_css_name (widget_class, "wnck-pager");
-#endif
 }
 
 static void
@@ -303,7 +300,7 @@ _wnck_pager_set_screen (WnckPager *pager)
     return;
 
   gdkscreen = gtk_widget_get_screen (GTK_WIDGET (pager));
-  pager->priv->screen = wnck_screen_get (gdk_screen_get_number (gdkscreen));
+  pager->priv->screen = wnck_screen_get (gdk_x11_screen_get_screen_number (gdkscreen));
 
   if (!wnck_pager_set_layout_hint (pager))
     {
@@ -365,8 +362,6 @@ wnck_pager_realize (GtkWidget *widget)
   window = gdk_window_new (gtk_widget_get_parent_window (widget), &attributes, attributes_mask);
   gtk_widget_set_window (widget, window);
   gdk_window_set_user_data (window, widget);
-
-  gtk_style_context_set_background (gtk_widget_get_style_context (widget), window);
 
   /* connect to the screen of this pager. In theory, this will already have
    * been done in wnck_pager_size_request() */
@@ -1307,9 +1302,10 @@ wnck_pager_draw_workspace (WnckPager    *pager,
 
                   for (j = 0; j < verti_views; j++)
                     {
+                      GtkStateFlags rec_state = GTK_STATE_FLAG_NORMAL;
+
                       /* "+ j" is for the thin lines */
                       vy = rect->y + (height_ratio * screen_height) * j + j;
-                      GtkStateFlags rec_state = GTK_STATE_FLAG_NORMAL;
 
                       if (j == verti_views - 1)
                         vh = rect->height + rect->y - vy;
@@ -1353,19 +1349,20 @@ wnck_pager_draw_workspace (WnckPager    *pager,
 							    wnck_screen_get_workspace (pager->priv->screen,
 										       workspace));
 
-  tmp = windows;
-  while (tmp != NULL)
-  	{
-  	  WnckWindow *win = tmp->data;
-  	  GdkRectangle winrect;
+      tmp = windows;
+      while (tmp != NULL)
+        {
+          WnckWindow *win = tmp->data;
+          GdkRectangle winrect;
+          gboolean translucent;
 
-  	  get_window_rect (win, rect, &winrect);
+          get_window_rect (win, rect, &winrect);
 
-      gboolean translucent = (win == pager->priv->drag_window) && pager->priv->dragging;
-      draw_window (cr, widget, win, &winrect, state, translucent);
+          translucent = (win == pager->priv->drag_window) && pager->priv->dragging;
+          draw_window (cr, widget, win, &winrect, state, translucent);
 
-  	  tmp = tmp->next;
-  	}
+          tmp = tmp->next;
+        }
 
       g_list_free (windows);
     }
@@ -1431,6 +1428,10 @@ wnck_pager_draw (GtkWidget *widget,
 
   state = gtk_widget_get_state_flags (widget);
   context = gtk_widget_get_style_context (widget);
+
+  gtk_render_background (context, cr, 0, 0,
+                         gtk_widget_get_allocated_width (widget),
+                         gtk_widget_get_allocated_height (widget));
 
   gtk_style_context_save (context);
   gtk_style_context_set_state (context, state);
@@ -1619,11 +1620,7 @@ wnck_pager_drag_motion (GtkWidget          *widget,
 
   if (gtk_drag_dest_find_target (widget, context, NULL))
     {
-#if GTK_CHECK_VERSION(2,21,0)
       gdk_drag_status (context, gdk_drag_context_get_suggested_action (context), time);
-#else
-      gdk_drag_status (context, context->suggested_action, time);
-#endif
     }
   else
     {
@@ -1793,8 +1790,7 @@ wnck_update_drag_icon (WnckWindow     *window,
   if (!widget)
     return;
 
-  if (!gtk_icon_size_lookup_for_settings (gtk_widget_get_settings (widget),
-					  GTK_ICON_SIZE_DND, &dnd_w, &dnd_h))
+  if (!gtk_icon_size_lookup (GTK_ICON_SIZE_DND, &dnd_w, &dnd_h))
     dnd_w = dnd_h = 32;
   /* windows are huge, so let's make this huge */
   dnd_w *= 3;
@@ -1914,15 +1910,15 @@ wnck_pager_motion (GtkWidget        *widget,
 {
   WnckPager *pager;
   GdkWindow *window;
-  GdkDeviceManager *dev_manager;
+  GdkSeat *seat;
   GdkDevice *pointer;
   int x, y;
 
   pager = WNCK_PAGER (widget);
 
-  dev_manager = gdk_display_get_device_manager (gtk_widget_get_display (widget));
+  seat = gdk_display_get_default_seat (gtk_widget_get_display (widget));
   window = gtk_widget_get_window (widget);
-  pointer = gdk_device_manager_get_client_pointer (dev_manager);
+  pointer = gdk_seat_get_pointer (seat);
   gdk_window_get_device_position (window, pointer, &x, &y, NULL);
 
   if (!pager->priv->dragging &&
@@ -1932,11 +1928,15 @@ wnck_pager_motion (GtkWidget        *widget,
                                 pager->priv->drag_start_y,
                                 x, y))
     {
+      GtkTargetList *target_list;
       GdkDragContext *context;
-      context = gtk_drag_begin (widget,
-				gtk_drag_dest_get_target_list (widget),
-				GDK_ACTION_MOVE,
-				1, (GdkEvent *)event);
+
+      target_list = gtk_drag_dest_get_target_list (widget);
+      context = gtk_drag_begin_with_coordinates (widget, target_list,
+                                                 GDK_ACTION_MOVE,
+                                                 1, (GdkEvent *) event,
+                                                 -1, -1);
+
       pager->priv->dragging = TRUE;
       pager->priv->prelight_dnd = TRUE;
       _wnck_window_set_as_drag_icon (pager->priv->drag_window,
@@ -2033,6 +2033,7 @@ wnck_pager_scroll_event (GtkWidget      *widget,
   int                 n_workspaces;
   int                 n_columns;
   int                 in_last_row;
+  gboolean            wrap_workspaces;
   gdouble             smooth_x;
   gdouble             smooth_y;
 
@@ -2053,6 +2054,7 @@ wnck_pager_scroll_event (GtkWidget      *widget,
   if (n_workspaces % pager->priv->n_rows != 0)
     n_columns++;
   in_last_row = n_workspaces % n_columns;
+  wrap_workspaces = pager->priv->wrap_on_scroll;
 
   if (gtk_widget_get_direction (GTK_WIDGET (pager)) == GTK_TEXT_DIR_RTL)
     {
@@ -2074,6 +2076,8 @@ wnck_pager_scroll_event (GtkWidget      *widget,
             else if (smooth_x < -5)
               absolute_direction = GDK_SCROLL_LEFT;
             break;
+          default:
+            break;
         }
     }
 
@@ -2081,32 +2085,65 @@ wnck_pager_scroll_event (GtkWidget      *widget,
     {
       case GDK_SCROLL_DOWN:
         if (index + n_columns < n_workspaces)
-          index += n_columns;
+          {
+            index += n_columns;
+          }
+        else if (wrap_workspaces && index == n_workspaces - 1)
+          {
+            index = 0;
+          }
         else if ((index < n_workspaces - 1 &&
                   index + in_last_row != n_workspaces - 1) ||
                  (index == n_workspaces - 1 &&
                   in_last_row != 0))
-          index = (index % n_columns) + 1;
+          {
+            index = (index % n_columns) + 1;
+          }
         break;
 
       case GDK_SCROLL_RIGHT:
         if (index < n_workspaces - 1)
-          index++;
+          {
+            index++;
+          }
+        else if (wrap_workspaces)
+          {
+            index = 0;
+          }
         break;
 
       case GDK_SCROLL_UP:
         if (index - n_columns >= 0)
-          index -= n_columns;
+          {
+            index -= n_columns;
+          }
         else if (index > 0)
-          index = ((pager->priv->n_rows - 1) * n_columns) + (index % n_columns) - 1;
+          {
+            index = ((pager->priv->n_rows - 1) * n_columns) + (index % n_columns) - 1;
+          }
+        else if (wrap_workspaces)
+          {
+            index = n_workspaces - 1;
+          }
+
         if (index >= n_workspaces)
-          index -= n_columns;
+          {
+            index -= n_columns;
+          }
         break;
 
       case GDK_SCROLL_LEFT:
         if (index > 0)
-          index--;
+          {
+            index--;
+          }
+        else if (wrap_workspaces)
+          {
+            index = n_workspaces - 1;
+          }
         break;
+
+      case GDK_SCROLL_SMOOTH:
       default:
         g_assert_not_reached ();
         break;
@@ -2407,6 +2444,43 @@ wnck_pager_set_shadow_type (WnckPager *   pager,
 
   pager->priv->shadow_type = shadow_type;
   gtk_widget_queue_resize (GTK_WIDGET (pager));
+}
+
+/**
+ * wnck_pager_set_wrap_on_scroll:
+ * @pager: a #WnckPager.
+ * @wrap_on_scroll: a boolean.
+ *
+ * Sets the wrapping behavior of the @pager. Setting it to %TRUE will
+ * wrap arround to the start when scrolling over the end and vice
+ * versa. By default it is set to %FALSE.
+ *
+ * Since: 3.24.0
+ */
+void
+wnck_pager_set_wrap_on_scroll (WnckPager *pager,
+                               gboolean   wrap_on_scroll)
+{
+  g_return_if_fail (WNCK_IS_PAGER (pager));
+
+  pager->priv->wrap_on_scroll = wrap_on_scroll;
+}
+
+/**
+ * wnck_pager_get_wrap_on_scroll:
+ * @pager: a #WnckPager.
+ *
+ * Return value: %TRUE if the @pager wraps workspaces on a scroll event that
+ * hits a border, %FALSE otherwise.
+ *
+ * Since: 3.24.0
+ */
+gboolean
+wnck_pager_get_wrap_on_scroll (WnckPager *pager)
+{
+  g_return_val_if_fail (WNCK_IS_PAGER (pager), FALSE);
+
+  return pager->priv->wrap_on_scroll;
 }
 
 static void

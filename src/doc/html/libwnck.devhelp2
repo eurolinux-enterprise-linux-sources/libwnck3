@@ -18,7 +18,7 @@
     </sub>
     <sub name="Libwnck Utilities" link="utils.html">
       <sub name="Resource Usage of X Clients" link="libwnck-Resource-Usage-of-X-Clients.html"/>
-      <sub name="Icon Files" link="libwnck-Icons-Functions.html"/>
+      <sub name="Icons Functions" link="libwnck-Icons-Functions.html"/>
       <sub name="Miscellaneous Functions" link="libwnck-Miscellaneous-Functions.html"/>
       <sub name="Version Information" link="libwnck-Version-Information.html"/>
     </sub>
