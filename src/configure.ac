@@ -1,38 +1,35 @@
 AC_PREREQ(2.62)
 
 m4_define([wnck_major_version], [3])
-m4_define([wnck_minor_version], [24])
-m4_define([wnck_micro_version], [1])
+m4_define([wnck_minor_version], [4])
+m4_define([wnck_micro_version], [5])
 m4_define([wnck_version],
           [wnck_major_version.wnck_minor_version.wnck_micro_version])
 
 AC_INIT([libwnck], [wnck_version],
         [http://bugzilla.gnome.org/enter_bug.cgi?product=libwnck])
 
-AX_IS_RELEASE([git-directory])
-
-AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS(config.h)
 
 AM_INIT_AUTOMAKE([1.11 no-dist-gzip dist-xz tar-ustar])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 AC_CONFIG_MACRO_DIR([m4])
 
-AX_CHECK_ENABLE_DEBUG([yes])
+GNOME_MAINTAINER_MODE_DEFINES
 
 dnl libtool versioning for libwnck
 
 dnl increment if the interface has additions, changes, removals.
-LIBWNCK_CURRENT=3
+LIBWNCK_CURRENT=2
 
 dnl increment any time the source changes; set to
 dnl  0 if you increment CURRENT
-LIBWNCK_REVISION=0
+LIBWNCK_REVISION=2
 
 dnl increment if any interfaces have been added; set to 0
 dnl  if any interfaces have been changed or removed. removal has
 dnl  precedence over adding, so set to 0 if both happened.
-LIBWNCK_AGE=3
+LIBWNCK_AGE=2
 
 AC_SUBST(LIBWNCK_CURRENT)
 AC_SUBST(LIBWNCK_REVISION)
@@ -48,9 +45,11 @@ AC_SUBST(WNCK_MICRO_VERSION)
 LT_PREREQ([2.2.6])
 LT_INIT([dlopen disable-static])
 
+IT_PROG_INTLTOOL([0.40.6])
+
 AC_PROG_CC
 
-AX_COMPILER_FLAGS([WARN_CFLAGS], [WARN_LDFLAGS])
+GNOME_COMPILE_WARNINGS([maximum])
 
 AC_ARG_ENABLE(deprecation_flags,
               [AC_HELP_STRING([--enable-deprecation-flags],
@@ -68,14 +67,17 @@ AC_ARG_ENABLE(tools,
               [enable_tools=yes])
 AM_CONDITIONAL(ENABLE_TOOLS, test "x$enable_tools" != "xno")
 
-AM_GNU_GETTEXT_VERSION([0.19.4])
-AM_GNU_GETTEXT([external])
-
 GETTEXT_PACKAGE=libwnck-3.0
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [Package name])
 
-AC_PATH_PROG([GLIB_COMPILE_RESOURCES], [glib-compile-resources])
+AM_GLIB_GNU_GETTEXT
+
+# AM_GLIB_GNU_GETTEXT above substs $DATADIRNAME
+# this is the directory where the *.{mo,gmo} files are installed
+wncklocaledir='${prefix}/${DATADIRNAME}/locale'
+AC_SUBST(wncklocaledir)
+
 AC_PATH_PROG(PKG_CONFIG, pkg-config)
 
 AC_CHECK_LIBM
@@ -119,11 +121,6 @@ PKG_CHECK_MODULES(XLIB, x11,
      fi])
 AC_SUBST(X11_PACKAGE)
 
-PKG_CHECK_EXISTS([cairo-xlib-xrender],
-                 [AC_DEFINE_UNQUOTED([HAVE_CAIRO_XLIB_XRENDER], [1],
-                                     [Define if building against cairo-xlib-xrender])
-                  CAIRO_XLIB_XRENDER_PACKAGE=cairo-xlib-xrender])
-
 AC_MSG_CHECKING([if building with X Resource Information Extension Library])
 if $PKG_CONFIG xres; then
   AC_MSG_RESULT([yes])
@@ -146,13 +143,23 @@ AC_SUBST(XLIB_CFLAGS)
 AC_SUBST(XLIB_LIBS)
 
 PKG_CHECK_MODULES([LIBWNCK],[
-	gtk+-3.0 >= 3.22.0
+	gtk+-3.0 >= 3.4
 	glib-2.0 >= 2.32
 	gobject-2.0 >= 2.13.0
-	$CAIRO_XLIB_XRENDER_PACKAGE
 	$STARTUP_NOTIFICATION_PACKAGE
 	$XRES_PACKAGE
 ])
+
+GLIB_GENMARSHAL=`$PKG_CONFIG --variable=glib_genmarshal glib-2.0`  
+AC_SUBST(GLIB_GENMARSHAL)
+
+AC_PATH_PROG(GDK_PIXBUF_CSOURCE, gdk-pixbuf-csource, no)
+
+if test x"$GDK_PIXBUF_CSOURCE" = xno; then
+  AC_MSG_ERROR([gdk-pixbuf-csource executable not found in your path - should be installed with GTK])
+fi
+
+AC_SUBST(GDK_PIXBUF_CSOURCE)
 
 ##################################################
 # Checks for gtk-doc and docbook-tools
@@ -160,16 +167,6 @@ PKG_CHECK_MODULES([LIBWNCK],[
 GTK_DOC_CHECK([1.9])
 
 GOBJECT_INTROSPECTION_CHECK([0.6.14])
-
-if test "$enable_introspection" = "yes"; then
-  # Redefine introspection dirs using proper prefixes
-
-  INTROSPECTION_GIRDIR=`$PKG_CONFIG --define-variable=datadir=${datadir} --variable=girdir gobject-introspection-1.0`
-  AC_SUBST(INTROSPECTION_GIRDIR)
-
-  INTROSPECTION_TYPELIBDIR=`$PKG_CONFIG --define-variable=libdir=${libdir} --variable=typelibdir gobject-introspection-1.0`
-  AC_SUBST(INTROSPECTION_TYPELIBDIR)
-fi
 
 AC_OUTPUT([
 Makefile

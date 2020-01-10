@@ -18,7 +18,9 @@
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  */
 
 #include <config.h>
@@ -80,7 +82,10 @@ enum {
   LAST_SIGNAL
 };
 
+static void wnck_workspace_init        (WnckWorkspace      *workspace);
+static void wnck_workspace_class_init  (WnckWorkspaceClass *klass);
 static void wnck_workspace_finalize    (GObject        *object);
+
 
 static void emit_name_changed (WnckWorkspace *space);
 
@@ -91,7 +96,14 @@ wnck_workspace_init (WnckWorkspace *workspace)
 {
   workspace->priv = WNCK_WORKSPACE_GET_PRIVATE (workspace);
 
+  workspace->priv->screen = NULL;
   workspace->priv->number = -1;
+  workspace->priv->name = NULL;
+  workspace->priv->width = 0;
+  workspace->priv->height = 0;
+  workspace->priv->viewport_x = 0;
+  workspace->priv->viewport_y = 0;
+  workspace->priv->is_virtual = FALSE;
 }
 
 static void
@@ -114,7 +126,8 @@ wnck_workspace_class_init (WnckWorkspaceClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckWorkspaceClass, name_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
                   G_TYPE_NONE, 0);
 }
 
@@ -591,9 +604,6 @@ wnck_workspace_get_neighbor (WnckWorkspace       *space,
         index -= add;
       else
         index += add;
-      break;
-
-    default:
       break;
     }
 

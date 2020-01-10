@@ -17,7 +17,9 @@
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  */
 
 #if !defined (__LIBWNCK_H_INSIDE__) && !defined (WNCK_COMPILATION)
@@ -60,9 +62,9 @@ struct _WnckClassGroupClass
 {
   GObjectClass parent_class;
 
-  void (* name_changed) (WnckClassGroup *group);
-  void (* icon_changed) (WnckClassGroup *group);
-
+  void (* name_changed) (WnckApplication *app);
+  void (* icon_changed) (WnckApplication *app);
+  
   /* Padding for future expansion */
   void (* pad1) (void);
   void (* pad2) (void);

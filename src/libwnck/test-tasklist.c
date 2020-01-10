@@ -9,20 +9,14 @@ static gboolean always_group = FALSE;
 static gboolean rtl = FALSE;
 static gboolean skip_tasklist = FALSE;
 static gboolean transparent = FALSE;
-static gboolean vertical = FALSE;
-static gint icon_size = WNCK_DEFAULT_MINI_ICON_SIZE;
-static gboolean enable_scroll = TRUE;
 
 static GOptionEntry entries[] = {
 	{"always-group", 'g', 0, G_OPTION_ARG_NONE, &always_group, "Always group windows", NULL},
 	{"never-group", 'n', 0, G_OPTION_ARG_NONE, &never_group, "Never group windows", NULL},
 	{"display-all", 'a', 0, G_OPTION_ARG_NONE, &display_all, "Display windows from all workspaces", NULL},
-	{"icon-size", 'i', 0, G_OPTION_ARG_INT, &icon_size, "Icon size for tasklist", NULL},
 	{"rtl", 'r', 0, G_OPTION_ARG_NONE, &rtl, "Use RTL as default direction", NULL},
 	{"skip-tasklist", 's', 0, G_OPTION_ARG_NONE, &skip_tasklist, "Don't show window in tasklist", NULL},
-	{"vertical", 'v', 0, G_OPTION_ARG_NONE, &vertical, "Show in vertical mode", NULL},
 	{"transparent", 't', 0, G_OPTION_ARG_NONE, &transparent, "Enable Transparency", NULL},
-	{"disable-scroll", 'd', G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &enable_scroll, "Disable scrolling", NULL},
 	{NULL }
 };
 
@@ -42,11 +36,9 @@ static void
 window_composited_changed (GtkWidget *widget,
                            gpointer   user_data)
 {
-  GdkScreen *screen;
   gboolean composited;
 
-  screen = gdk_screen_get_default ();
-  composited = gdk_screen_is_composited (screen);
+  composited = gtk_widget_is_composited (widget);
 
   gtk_widget_set_app_paintable (widget, composited);
 }
@@ -72,7 +64,6 @@ main (int argc, char **argv)
   if (rtl)
     gtk_widget_set_default_direction (GTK_TEXT_DIR_RTL);
 
-  wnck_set_default_mini_icon_size (icon_size);
   screen = wnck_screen_get_default ();
 
   /* because the pager doesn't respond to signals at the moment */
@@ -103,14 +94,6 @@ main (int argc, char **argv)
   else
     wnck_tasklist_set_grouping (WNCK_TASKLIST (tasklist),
                                 WNCK_TASKLIST_AUTO_GROUP);
-
-  wnck_tasklist_set_scroll_enabled (WNCK_TASKLIST (tasklist), enable_scroll);
-
-  wnck_tasklist_set_middle_click_close (WNCK_TASKLIST (tasklist), TRUE);
-
-  wnck_tasklist_set_orientation (WNCK_TASKLIST (tasklist),
-                                 (vertical ? GTK_ORIENTATION_VERTICAL :
-                                             GTK_ORIENTATION_HORIZONTAL));
 
   if (transparent)
     {

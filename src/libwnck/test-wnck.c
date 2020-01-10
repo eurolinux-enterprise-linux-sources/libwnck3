@@ -58,30 +58,13 @@ static void          update_window     (GtkTreeModel *model,
                                         WnckWindow   *window);
 static void          queue_refill_model (void);
 
-static gint icon_size = WNCK_DEFAULT_MINI_ICON_SIZE;
-
-static GOptionEntry entries[] = {
-  {"icon-size", 'i', 0, G_OPTION_ARG_INT, &icon_size, "Icon size for tasklist", NULL},
-  {NULL }
-};
-
-
 int
 main (int argc, char **argv)
 {
   WnckScreen *screen;
   GtkWidget *sw;
   GtkWidget *win;
-  GOptionContext *ctxt;
-
-  ctxt = g_option_context_new ("");
-  g_option_context_add_main_entries (ctxt, entries, NULL);
-  g_option_context_add_group (ctxt, gtk_get_option_group (TRUE));
-  g_option_context_parse (ctxt, &argc, &argv, NULL);
-  g_option_context_free (ctxt);
-
-  wnck_set_default_mini_icon_size (icon_size);
-
+  
   gtk_init (&argc, &argv);
 
   screen = wnck_screen_get (0);
@@ -803,6 +786,8 @@ create_tree_view (void)
   
   tree_view = gtk_tree_view_new ();
 
+  gtk_tree_view_set_rules_hint (GTK_TREE_VIEW (tree_view), TRUE);
+  
   /* The icon and title are in the same column, so pack
    * two cell renderers into that column
    */

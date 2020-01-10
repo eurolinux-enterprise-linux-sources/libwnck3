@@ -1,5 +1,3 @@
-NULL =
-
 lib_LTLIBRARIES = libwnck-3.la
 bin_PROGRAMS =
 noinst_PROGRAMS =		\
@@ -25,7 +23,7 @@ AM_CPPFLAGS =					\
 	-I$(top_srcdir)				\
 	-I$(top_builddir)			\
 	-DWNCK_I_KNOW_THIS_IS_UNSTABLE		\
-	-DWNCK_LOCALEDIR=\"$(localedir)\"	\
+	-DWNCK_LOCALEDIR=\"$(wncklocaledir)\"	\
 	$(DISABLE_DEPRECATED_CFLAGS)
 
 AM_CFLAGS = $(WARN_CFLAGS)
@@ -43,10 +41,12 @@ wnck_headers =			\
 	window-action-menu.h	\
 	workspace.h
 
+wnck_built_installed_headers = wnck-enum-types.h
+
 libwnckincludedir = $(includedir)/libwnck-3.0/libwnck
 libwnckinclude_HEADERS =		\
 	$(wnck_headers)			\
-	wnck-enum-types.h \
+	$(wnck_built_installed_headers)	\
 	version.h
 
 # Sources that are relevant for introspection
@@ -72,15 +72,19 @@ wnck_accessibility_files =			\
 	workspace-accessible-factory.c		\
 	workspace-accessible-factory.h
 
+wnck_built_headers = $(wnck_built_installed_headers) wnck-marshal.h inlinepixbufs.h
+wnck_built_cfiles = wnck-enum-types.c wnck-marshal.c
+
 libwnck_3_la_SOURCES = 		\
-	$(BUILT_SOURCES) \
+	$(wnck_built_headers)	\
+	$(wnck_built_cfiles)	\
 	$(wnck_sources)		\
 	private.h		\
 	xutils.c		\
 	xutils.h		\
-	wnck-image-menu-item.c \
-	wnck-image-menu-item-private.h \
 	$(wnck_accessibility_files)
+
+$(libwnck_3_la_OBJECTS): $(wnck_built_headers)
 
 libwnck_3_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)			\
@@ -97,10 +101,7 @@ libwnck_3_la_LIBADD =	\
 libwnck_3_la_LDFLAGS =								\
 	-version-info $(LIBWNCK_CURRENT):$(LIBWNCK_REVISION):$(LIBWNCK_AGE)	\
 	-no-undefined								\
-	-export-symbols-regex "^[^_].*" \
-	$(WARN_LDFLAGS) \
-	$(AM_LDFLAGS) \
-	$(NULL)
+	-export-symbols-regex "^[^_].*"
 
 wnckprop_SOURCES = wnckprop.c
 wnck_urgency_monitor_SOURCES = wnck-urgency-monitor.c
@@ -119,6 +120,14 @@ test_selector_LDADD = $(LIBWNCK_LIBS) ./$(lib_LTLIBRARIES)
 test_pager_LDADD = $(LIBWNCK_LIBS) ./$(lib_LTLIBRARIES)
 test_urgent_LDADD = $(LIBWNCK_LIBS)
 test_shutdown_LDADD = $(LIBWNCK_LIBS) ./$(lib_LTLIBRARIES)
+
+wnck-marshal.h: wnck-marshal.list
+	$(AM_V_GEN)$(GLIB_GENMARSHAL) --prefix=_wnck_marshal $< --header > $@
+
+wnck-marshal.c: wnck-marshal.list wnck-marshal.h
+	$(AM_V_GEN)echo "#include <libwnck/libwnck.h>" > $@ \
+	&& echo "#include \"wnck-marshal.h\"" >> $@ \
+	&& $(GLIB_GENMARSHAL) --prefix=_wnck_marshal $< --body >> $@
 
 wnck-enum-types.h: $(wnck_headers)
 	$(AM_V_GEN)glib-mkenums \
@@ -149,27 +158,24 @@ wnck-enum-types.c: $(wnck_headers)
 		--vtail "  return type;\n}\n\n" \
 		$^ > $@
 
-wnck-resources.h wnck-resources.c: wnck.gresource.xml \
-	$(shell $(GLIB_COMPILE_RESOURCES) --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/wnck.gresource.xml)
-	$(AM_V_GEN) $(GLIB_COMPILE_RESOURCES) --target=$@ --sourcedir=$(srcdir) --generate --c-name libwnck $<
+inlinepixbufs_SOURCES = default_icon.png stock_delete.png stock_maximize.png stock_minimize.png
+inlinepixbufs_pairs =						\
+	default_icon_data $(srcdir)/default_icon.png 		\
+	stock_delete_data $(srcdir)/stock_delete.png 		\
+	stock_maximize_data $(srcdir)/stock_maximize.png 	\
+	stock_minimize_data $(srcdir)/stock_minimize.png
 
-BUILT_SOURCES = \
-	wnck-enum-types.c \
-	wnck-enum-types.h \
-	wnck-resources.c \
-	wnck-resources.h \
-	$(NULL)
+inlinepixbufs.h: $(inlinepixbufs_SOURCES)
+	$(AM_V_GEN)$(GDK_PIXBUF_CSOURCE) --raw --build-list $(inlinepixbufs_pairs) > $@
 
 CLEANFILES =			\
-	$(BUILT_SOURCES) \
-	$(NULL)
+	$(wnck_built_cfiles)	\
+	$(wnck_built_headers)
 
-EXTRA_DIST = \
-	default_icon.png \
-	wnck.css \
-	wnck.gresource.xml \
-	version.h.in \
-	$(NULL)
+EXTRA_DIST = 				\
+	$(inlinepixbufs_SOURCES)	\
+	version.h.in			\
+	wnck-marshal.list
 
 # Introspection
 -include $(INTROSPECTION_MAKEFILE)
@@ -184,7 +190,7 @@ Wnck-3.0.gir: libwnck-3.la
 Wnck_3_0_gir_INCLUDES = GObject-2.0 GdkPixbuf-2.0 Gtk-3.0
 Wnck_3_0_gir_CFLAGS = $(libwnck_3_la_CPPFLAGS)
 Wnck_3_0_gir_LIBS = libwnck-3.la
-Wnck_3_0_gir_SCANNERFLAGS = --pkg-export=libwnck-3.0 $(WARN_SCANNERFLAGS)
+Wnck_3_0_gir_SCANNERFLAGS = --pkg-export=libwnck-3.0
 Wnck_3_0_gir_FILES = $(introspection_sources)
 INTROSPECTION_GIRS += Wnck-3.0.gir
 

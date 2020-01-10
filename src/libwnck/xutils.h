@@ -16,7 +16,9 @@
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  */
 
 #ifndef WNCK_XUTILS_H
@@ -29,6 +31,10 @@
 #include <gdk/gdkx.h>
 
 G_BEGIN_DECLS
+
+#define WNCK_STOCK_DELETE "wnck-stock-delete"
+#define WNCK_STOCK_MAXIMIZE "wnck-stock-maximize"
+#define WNCK_STOCK_MINIMIZE "wnck-stock-minimize"
 
 #define WNCK_APP_WINDOW_EVENT_MASK (PropertyChangeMask | StructureNotifyMask)
 

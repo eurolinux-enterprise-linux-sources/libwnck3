@@ -16,7 +16,9 @@
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  */
 
 #if !defined (__LIBWNCK_H_INSIDE__) && !defined (WNCK_COMPILATION)
@@ -80,23 +82,20 @@ typedef enum {
   WNCK_PAGER_DISPLAY_CONTENT
 } WnckPagerDisplayMode;
 
-GType      wnck_pager_get_type           (void) G_GNUC_CONST;
+GType wnck_pager_get_type (void) G_GNUC_CONST;
 
-GtkWidget* wnck_pager_new                (void);
+GtkWidget* wnck_pager_new (void);
 
-gboolean   wnck_pager_set_orientation    (WnckPager            *pager,
-                                          GtkOrientation        orientation);
-gboolean   wnck_pager_set_n_rows         (WnckPager            *pager,
-                                          int                   n_rows);
-void       wnck_pager_set_display_mode   (WnckPager            *pager,
-                                          WnckPagerDisplayMode  mode);
-void       wnck_pager_set_show_all       (WnckPager            *pager,
-                                          gboolean              show_all_workspaces);
-void       wnck_pager_set_shadow_type    (WnckPager            *pager,
-                                          GtkShadowType         shadow_type);
-void       wnck_pager_set_wrap_on_scroll (WnckPager            *pager,
-                                          gboolean              wrap_on_scroll);
-gboolean   wnck_pager_get_wrap_on_scroll (WnckPager            *pager);
+gboolean wnck_pager_set_orientation (WnckPager         *pager,
+				     GtkOrientation     orientation);
+gboolean wnck_pager_set_n_rows   (WnckPager            *pager,
+				  int                   n_rows);
+void wnck_pager_set_display_mode (WnckPager            *pager,
+				  WnckPagerDisplayMode  mode);
+void wnck_pager_set_show_all     (WnckPager            *pager,
+				  gboolean              show_all_workspaces);
+void wnck_pager_set_shadow_type  (WnckPager	       *pager,
+				  GtkShadowType		shadow_type);
 
 G_END_DECLS
 

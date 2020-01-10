@@ -17,7 +17,9 @@
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  */
 
 #if !defined (__LIBWNCK_H_INSIDE__) && !defined (WNCK_COMPILATION)
@@ -101,12 +103,6 @@ typedef enum {
 } WnckClientType;
 
 void wnck_set_client_type (WnckClientType ewmh_sourceindication_client_type);
-
-#define WNCK_DEFAULT_ICON_SIZE 32
-#define WNCK_DEFAULT_MINI_ICON_SIZE 16
-
-void wnck_set_default_icon_size      (gsize size);
-void wnck_set_default_mini_icon_size (gsize size);
 
 void wnck_shutdown        (void);
 

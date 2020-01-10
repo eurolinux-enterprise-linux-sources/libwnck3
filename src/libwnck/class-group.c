@@ -17,7 +17,9 @@
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  */
 
 #undef WNCK_DISABLE_DEPRECATED
@@ -64,6 +66,10 @@ G_DEFINE_TYPE (WnckClassGroup, wnck_class_group, G_TYPE_OBJECT);
 /* Hash table that maps res_class strings -> WnckClassGroup instances */
 static GHashTable *class_group_hash = NULL;
 
+
+
+static void wnck_class_group_class_init  (WnckClassGroupClass *class);
+static void wnck_class_group_init        (WnckClassGroup      *class_group);
 static void wnck_class_group_finalize    (GObject             *object);
 
 enum {
@@ -104,7 +110,8 @@ wnck_class_group_class_init (WnckClassGroupClass *class)
                   G_OBJECT_CLASS_TYPE (gobject_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckClassGroupClass, name_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
                   G_TYPE_NONE, 0);
   /**
    * WnckClassGroup::icon-changed:
@@ -117,7 +124,8 @@ wnck_class_group_class_init (WnckClassGroupClass *class)
                   G_OBJECT_CLASS_TYPE (gobject_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckClassGroupClass, icon_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
                   G_TYPE_NONE, 0);
 }
 
@@ -125,6 +133,13 @@ static void
 wnck_class_group_init (WnckClassGroup *class_group)
 {
   class_group->priv = WNCK_CLASS_GROUP_GET_PRIVATE (class_group);
+
+  class_group->priv->res_class = NULL;
+  class_group->priv->name = NULL;
+  class_group->priv->windows = NULL;
+
+  class_group->priv->icon = NULL;
+  class_group->priv->mini_icon = NULL;
 }
 
 static void
@@ -417,11 +432,11 @@ set_icon (WnckClassGroup *class_group)
   if (!icon || !mini_icon)
     {
       _wnck_get_fallback_icons (&icon,
-                                _wnck_get_default_icon_size (),
-                                _wnck_get_default_icon_size (),
+                                DEFAULT_ICON_WIDTH,
+                                DEFAULT_ICON_HEIGHT,
                                 &mini_icon,
-                                _wnck_get_default_mini_icon_size (),
-                                _wnck_get_default_mini_icon_size ());
+                                DEFAULT_MINI_ICON_WIDTH,
+                                DEFAULT_MINI_ICON_HEIGHT);
       icons_reffed = TRUE;
     }
 

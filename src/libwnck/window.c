@@ -18,7 +18,9 @@
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  */
 
 #include <config.h>
@@ -33,6 +35,7 @@
 #include "xutils.h"
 #include "private.h"
 #include "wnck-enum-types.h"
+#include "wnck-marshal.h"
 
 /**
  * SECTION:window
@@ -45,7 +48,7 @@
  */
 
 #define FALLBACK_NAME _("Untitled window")
-#define ALL_WORKSPACES ((int) 0xFFFFFFFF)
+#define ALL_WORKSPACES (0xFFFFFFFF)
 
 static GHashTable *window_hash = NULL;
 
@@ -163,7 +166,6 @@ struct _WnckWindowPrivate
   guint need_emit_icon_changed : 1;
   guint need_emit_class_changed : 1;
   guint need_emit_role_changed : 1;
-  guint need_emit_type_changed : 1;
 };
 
 G_DEFINE_TYPE (WnckWindow, wnck_window, G_TYPE_OBJECT);
@@ -178,10 +180,11 @@ enum {
   GEOMETRY_CHANGED,
   CLASS_CHANGED,
   ROLE_CHANGED,
-  TYPE_CHANGED,
   LAST_SIGNAL
 };
 
+static void wnck_window_init        (WnckWindow      *window);
+static void wnck_window_class_init  (WnckWindowClass *klass);
 static void wnck_window_finalize    (GObject        *object);
 
 static void emit_name_changed      (WnckWindow      *window);
@@ -196,7 +199,6 @@ static void emit_actions_changed   (WnckWindow       *window,
 static void emit_geometry_changed  (WnckWindow      *window);
 static void emit_class_changed     (WnckWindow      *window);
 static void emit_role_changed      (WnckWindow      *window);
-static void emit_type_changed      (WnckWindow      *window);
 
 static void update_name      (WnckWindow *window);
 static void update_state     (WnckWindow *window);
@@ -234,13 +236,88 @@ wnck_window_init (WnckWindow *window)
 {
   window->priv = WNCK_WINDOW_GET_PRIVATE (window);
 
-  window->priv->icon_cache = _wnck_icon_cache_new ();
+  window->priv->xwindow = None;
+  window->priv->name = NULL;
+  window->priv->app = NULL;
+  window->priv->class_group = NULL;
+  window->priv->group_leader = None;
+  window->priv->transient_for = None;
+  window->priv->orig_event_mask = 0;
   window->priv->icon_geometry.width = -1; /* invalid cached value */
+  window->priv->name = NULL;
+  window->priv->icon_name = NULL;
+  window->priv->session_id = NULL;
+  window->priv->session_id_utf8 = NULL;
+  window->priv->pid = 0;
   window->priv->workspace = -1;
   window->priv->sort_order = G_MAXINT;
 
   /* FIXME: should we have an invalid window type for this? */
-  window->priv->wintype = WNCK_WINDOW_NORMAL;
+  window->priv->wintype = 0;
+
+  window->priv->icon = NULL;
+  window->priv->mini_icon = NULL;
+
+  window->priv->icon_cache = _wnck_icon_cache_new ();
+
+  window->priv->actions = 0;
+
+  window->priv->x = 0;
+  window->priv->y = 0;
+  window->priv->width = 0;
+  window->priv->height = 0;
+
+  window->priv->left_frame = 0;
+  window->priv->right_frame = 0;
+  window->priv->top_frame = 0;
+  window->priv->bottom_frame = 0;
+
+  window->priv->startup_id = NULL;
+
+  window->priv->res_class = NULL;
+  window->priv->res_name = NULL;
+
+  window->priv->transient_for_root = FALSE;
+
+  window->priv->is_minimized = FALSE;
+  window->priv->is_maximized_horz = FALSE;
+  window->priv->is_maximized_vert = FALSE;
+  window->priv->is_shaded = FALSE;
+  window->priv->is_above = FALSE;
+  window->priv->is_below = FALSE;
+  window->priv->skip_pager = FALSE;
+  window->priv->skip_taskbar = FALSE;
+  window->priv->is_sticky = FALSE;
+  window->priv->is_hidden = FALSE;
+  window->priv->is_fullscreen = FALSE;
+  window->priv->demands_attention = FALSE;
+  window->priv->is_urgent = FALSE;
+
+  window->priv->needs_attention_time = 0;
+
+  window->priv->net_wm_state_hidden = FALSE;
+  window->priv->wm_state_iconic = FALSE;
+
+  window->priv->update_handler = 0;
+
+  window->priv->need_update_name = FALSE;
+  window->priv->need_update_state = FALSE;
+  window->priv->need_update_wm_state = FALSE;
+  window->priv->need_update_icon_name = FALSE;
+  window->priv->need_update_workspace = FALSE;
+  window->priv->need_update_actions = FALSE;
+  window->priv->need_update_wintype = FALSE;
+  window->priv->need_update_transient_for = FALSE;
+  window->priv->need_update_startup_id = FALSE;
+  window->priv->need_update_wmclass = FALSE;
+  window->priv->need_update_wmhints = FALSE;
+  window->priv->need_update_frame_extents = FALSE;
+  window->priv->need_update_role = FALSE;
+
+  window->priv->need_emit_name_changed = FALSE;
+  window->priv->need_emit_icon_changed = FALSE;
+  window->priv->need_emit_class_changed = FALSE;
+  window->priv->need_emit_role_changed = FALSE;
 }
 
 static void
@@ -263,7 +340,8 @@ wnck_window_class_init (WnckWindowClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckWindowClass, name_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
                   G_TYPE_NONE, 0);
 
   /**
@@ -283,7 +361,8 @@ wnck_window_class_init (WnckWindowClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckWindowClass, state_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  _wnck_marshal_VOID__FLAGS_FLAGS,
                   G_TYPE_NONE, 2,
                   WNCK_TYPE_WINDOW_STATE, WNCK_TYPE_WINDOW_STATE);
 
@@ -299,7 +378,8 @@ wnck_window_class_init (WnckWindowClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckWindowClass, workspace_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
                   G_TYPE_NONE, 0);
 
   /**
@@ -313,7 +393,8 @@ wnck_window_class_init (WnckWindowClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckWindowClass, icon_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
                   G_TYPE_NONE, 0);
 
   /**
@@ -330,7 +411,8 @@ wnck_window_class_init (WnckWindowClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckWindowClass, actions_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  _wnck_marshal_VOID__FLAGS_FLAGS,
                   G_TYPE_NONE, 2,
                   WNCK_TYPE_WINDOW_ACTIONS,
                   WNCK_TYPE_WINDOW_ACTIONS);
@@ -346,7 +428,8 @@ wnck_window_class_init (WnckWindowClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckWindowClass, geometry_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
                   G_TYPE_NONE, 0);
 
   /**
@@ -360,7 +443,8 @@ wnck_window_class_init (WnckWindowClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckWindowClass, class_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
                   G_TYPE_NONE, 0);
 
   /**
@@ -374,23 +458,8 @@ wnck_window_class_init (WnckWindowClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckWindowClass, role_changed),
-                  NULL, NULL, NULL,
-                  G_TYPE_NONE, 0);
-
-  /**
-   * WnckWindow::type-changed:
-   * @window: the #WnckWindow which emitted the signal.
-   *
-   * Emitted when the EWMH type hint of the window changes.
-   *
-   * Since: 3.20
-   */
-  signals[TYPE_CHANGED] =
-    g_signal_new ("type_changed",
-                  G_OBJECT_CLASS_TYPE (object_class),
-                  G_SIGNAL_RUN_LAST,
-                  G_STRUCT_OFFSET (WnckWindowClass, type_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
                   G_TYPE_NONE, 0);
 }
 
@@ -560,7 +629,6 @@ _wnck_window_create (Window      xwindow,
   window->priv->need_emit_icon_changed = FALSE;
   window->priv->need_emit_class_changed = FALSE;
   window->priv->need_emit_role_changed = FALSE;
-  window->priv->need_emit_type_changed = FALSE;
   force_update_now (window);
 
   return window;
@@ -1019,8 +1087,6 @@ wnck_window_set_window_type (WnckWindow *window, WnckWindowType wintype)
 		   (guchar *)&atom, 1);
 
   _wnck_error_trap_pop (display);
-
-  emit_type_changed (window);
 }
 
 /**
@@ -2118,19 +2184,18 @@ get_icons (WnckWindow *window)
 {
   GdkPixbuf *icon;
   GdkPixbuf *mini_icon;
-  gsize normal_size;
-  gsize mini_size;
 
   icon = NULL;
   mini_icon = NULL;
-  normal_size = _wnck_get_default_icon_size ();
-  mini_size = _wnck_get_default_mini_icon_size ();
 
   if (_wnck_read_icons (WNCK_SCREEN_XSCREEN (window->priv->screen),
                         window->priv->xwindow,
                         window->priv->icon_cache,
-                        &icon, normal_size, normal_size,
-                        &mini_icon, mini_size, mini_size))
+                        &icon,
+                        DEFAULT_ICON_WIDTH, DEFAULT_ICON_HEIGHT,
+                        &mini_icon,
+                        DEFAULT_MINI_ICON_WIDTH,
+                        DEFAULT_MINI_ICON_HEIGHT))
     {
       window->priv->need_emit_icon_changed = TRUE;
 
@@ -2146,18 +2211,6 @@ get_icons (WnckWindow *window)
 
   g_assert ((window->priv->icon && window->priv->mini_icon) ||
             !(window->priv->icon || window->priv->mini_icon));
-}
-
-void
-_wnck_window_load_icons (WnckWindow *window)
-{
-  g_return_if_fail (WNCK_IS_WINDOW (window));
-
-  get_icons (window);
-  if (window->priv->need_emit_icon_changed)
-    queue_update (window); /* not done in get_icons since we call that from
-                            * the update
-                            */
 }
 
 /**
@@ -2177,7 +2230,11 @@ wnck_window_get_icon (WnckWindow *window)
 {
   g_return_val_if_fail (WNCK_IS_WINDOW (window), NULL);
 
-  _wnck_window_load_icons (window);
+  get_icons (window);
+  if (window->priv->need_emit_icon_changed)
+    queue_update (window); /* not done in get_icons since we call that from
+                            * the update
+                            */
 
   return window->priv->icon;
 }
@@ -2199,7 +2256,11 @@ wnck_window_get_mini_icon (WnckWindow *window)
 {
   g_return_val_if_fail (WNCK_IS_WINDOW (window), NULL);
 
-  _wnck_window_load_icons (window);
+  get_icons (window);
+  if (window->priv->need_emit_icon_changed)
+    queue_update (window); /* not done in get_icons since we call that from
+                            * the update
+                            */
 
   return window->priv->mini_icon;
 }
@@ -2621,9 +2682,7 @@ _wnck_window_process_property_notify (WnckWindow *window,
       queue_update (window);
     }
   else if (xevent->xproperty.atom ==
-           _wnck_atom_get ("_NET_FRAME_EXTENTS") ||
-           xevent->xproperty.atom ==
-           _wnck_atom_get ("_GTK_FRAME_EXTENTS"))
+           _wnck_atom_get ("_NET_FRAME_EXTENTS"))
     {
       window->priv->need_update_frame_extents = TRUE;
       queue_update (window);
@@ -2783,7 +2842,6 @@ update_state (WnckWindow *window)
       break;
 
     case WNCK_WINDOW_NORMAL:
-    default:
       break;
     }
 
@@ -2803,7 +2861,6 @@ update_state (WnckWindow *window)
     case WNCK_WINDOW_NORMAL:
     case WNCK_WINDOW_DIALOG:
     case WNCK_WINDOW_UTILITY:
-    default:
       break;
     }
 
@@ -2984,9 +3041,7 @@ update_actions (WnckWindow *window)
       else
         {
           const char *name = _wnck_atom_name (atoms [i]);
-
-          if (name && g_str_has_prefix (name, "_NET_WM_"))
-            g_warning ("Unhandled action type %s", name);
+          g_warning ("Unhandled action type %s", name ? name: "(nil)");
         }
 
       i++;
@@ -3072,11 +3127,7 @@ update_wintype (WnckWindow *window)
       found_type = TRUE;
     }
 
-  if (window->priv->wintype != type)
-    {
-      window->priv->need_emit_type_changed = TRUE;
-      window->priv->wintype = type;
-    }
+  window->priv->wintype = type;
 }
 
 static void
@@ -3288,7 +3339,7 @@ force_update_now (WnckWindow *window)
   update_wmclass (window);
   update_wmhints (window);
   update_transient_for (window); /* wintype needs this to be first */
-  update_wintype (window);   /* emits signals */
+  update_wintype (window);
   update_wm_state (window);
   update_state (window);     /* must come after the above, since they affect
                               * our calculated state
@@ -3317,9 +3368,6 @@ force_update_now (WnckWindow *window)
 
   if (window->priv->need_emit_role_changed)
     emit_role_changed (window);
-
-  if (window->priv->need_emit_type_changed)
-    emit_type_changed (window);
 }
 
 
@@ -3421,14 +3469,5 @@ emit_role_changed (WnckWindow *window)
   window->priv->need_emit_role_changed = FALSE;
   g_signal_emit (G_OBJECT (window),
                  signals[ROLE_CHANGED],
-                 0);
-}
-
-static void
-emit_type_changed (WnckWindow *window)
-{
-  window->priv->need_emit_type_changed = FALSE;
-  g_signal_emit (G_OBJECT (window),
-                 signals[TYPE_CHANGED],
                  0);
 }

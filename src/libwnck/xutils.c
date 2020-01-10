@@ -16,7 +16,9 @@
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  */
 
 #include <config.h>
@@ -24,12 +26,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <cairo-xlib.h>
-#if HAVE_CAIRO_XLIB_XRENDER
-#include <cairo-xlib-xrender.h>
-#endif
 #include "screen.h"
 #include "window.h"
 #include "private.h"
+#include "inlinepixbufs.h"
 
 gboolean
 _wnck_get_cardinal (Screen *screen,
@@ -705,7 +705,7 @@ _wnck_error_trap_push (Display *display)
 int
 _wnck_error_trap_pop (Display *display)
 {
-  gdk_flush ();
+  XSync (display, False);
   return gdk_error_trap_pop ();
 }
 
@@ -784,9 +784,6 @@ filter_func (GdkXEvent  *gdkxevent,
         }
 #endif /* HAVE_STARTUP_NOTIFICATION */
       break;
-
-    default:
-      break;
     }
 
   return GDK_FILTER_CONTINUE;
@@ -829,7 +826,7 @@ _wnck_xid_hash (gconstpointer v)
   gulong val = * (const gulong *) v;
 
   /* I'm not sure this works so well. */
-#if GLIB_SIZEOF_LONG > 4
+#if G_SIZEOF_LONG > 4
   return (guint) (val ^ (val >> 32));
 #else
   return val;
@@ -1370,23 +1367,6 @@ _wnck_get_frame_extents (Screen *screen,
       retval = TRUE;
     }
 
-  if (p_size == NULL)
-    {
-      _wnck_get_cardinal_list (screen, xwindow,
-                               _wnck_atom_get ("_GTK_FRAME_EXTENTS"),
-                               &p_size, &n_size);
-
-      if (p_size != NULL && n_size == 4)
-        {
-          *left_frame   = -p_size[0];
-          *right_frame  = -p_size[1];
-          *top_frame    = -p_size[2];
-          *bottom_frame = -p_size[3];
-
-          retval = TRUE;
-        }
-    }
-
   if (p_size != NULL)
     g_free (p_size);
 
@@ -1451,7 +1431,7 @@ find_largest_sizes (gulong *data,
       w = data[0];
       h = data[1];
 
-      if (nitems < ((gulong) (w * h) + 2))
+      if (nitems < ((w * h) + 2))
         return FALSE; /* not enough data */
 
       *width = MAX (w, *width);
@@ -1507,7 +1487,7 @@ find_best_size (gulong  *data,
       w = data[0];
       h = data[1];
 
-      if (nitems < ((gulong) (w * h) + 2))
+      if (nitems < ((w * h) + 2))
         break; /* not enough data */
 
       if (best_start == NULL)
@@ -1711,34 +1691,10 @@ _wnck_cairo_surface_get_from_pixmap (Screen *screen,
       if (!XGetWindowAttributes (display, root_return, &attrs))
         goto TRAP_POP;
 
-      if (depth_ret == (unsigned int) attrs.depth)
-	{
-	  surface = cairo_xlib_surface_create (display,
-					       xpixmap,
-					       attrs.visual,
-					       w_ret, h_ret);
-	}
-      else
-	{
-#if HAVE_CAIRO_XLIB_XRENDER
-	  int std;
-
-	  switch (depth_ret) {
-	  case 1: std = PictStandardA1; break;
-	  case 4: std = PictStandardA4; break;
-	  case 8: std = PictStandardA8; break;
-	  case 24: std = PictStandardRGB24; break;
-	  case 32: std = PictStandardARGB32; break;
-	  default: goto TRAP_POP;
-	  }
-
-	  surface = cairo_xlib_surface_create_with_xrender_format (display,
-								   xpixmap,
-								   attrs.screen,
-								   XRenderFindStandardFormat (display, std),
-								   w_ret, h_ret);
-#endif
-	}
+      surface = cairo_xlib_surface_create (display,
+                                           xpixmap,
+                                           attrs.visual,
+                                           w_ret, h_ret);
     }
 
 TRAP_POP:
@@ -1798,8 +1754,6 @@ try_pixmap_and_mask (Screen     *screen,
   if (surface == NULL)
     return FALSE;
 
-  gdk_error_trap_push ();
-
   width = cairo_xlib_surface_get_width (surface);
   height = cairo_xlib_surface_get_height (surface);
 
@@ -1837,12 +1791,6 @@ try_pixmap_and_mask (Screen     *screen,
 
   cairo_surface_destroy (surface);
   cairo_destroy (cr);
-
-  if (gdk_error_trap_pop () != Success)
-    {
-      cairo_surface_destroy (image);
-      return FALSE;
-    }
 
   unscaled = gdk_pixbuf_get_from_surface (image,
                                           0, 0,
@@ -2313,9 +2261,12 @@ static GdkPixbuf*
 default_icon_at_size (int width,
                       int height)
 {
+
   GdkPixbuf *base;
 
-  base = gdk_pixbuf_new_from_resource ("/org/gnome/libwnck/default_icon.png", NULL);
+  base = gdk_pixbuf_new_from_inline (-1, default_icon_data,
+                                     FALSE,
+                                     NULL);
 
   g_assert (base);
 
@@ -2352,15 +2303,15 @@ _wnck_get_fallback_icons (GdkPixbuf **iconp,
 {
   if (iconp)
     *iconp = default_icon_at_size (ideal_width > 0 ? ideal_width :
-                                   (int) _wnck_get_default_icon_size (),
+                                   DEFAULT_ICON_WIDTH,
                                    ideal_height > 0 ? ideal_height :
-                                   (int) _wnck_get_default_icon_size ());
+                                   DEFAULT_ICON_HEIGHT);
 
   if (mini_iconp)
     *mini_iconp = default_icon_at_size (ideal_mini_width > 0 ? ideal_mini_width :
-                                        (int) _wnck_get_default_mini_icon_size (),
+                                        DEFAULT_MINI_ICON_WIDTH,
                                         ideal_mini_height > 0 ? ideal_mini_height :
-                                        (int) _wnck_get_default_mini_icon_size ());
+                                        DEFAULT_MINI_ICON_HEIGHT);
 }
 
 

@@ -16,7 +16,9 @@
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  */
 
 #if !defined (__LIBWNCK_H_INSIDE__) && !defined (WNCK_COMPILATION)
@@ -95,19 +97,12 @@ void wnck_tasklist_set_grouping (WnckTasklist             *tasklist,
 				 WnckTasklistGroupingType  grouping);
 void wnck_tasklist_set_switch_workspace_on_unminimize (WnckTasklist  *tasklist,
 						       gboolean       switch_workspace_on_unminimize);
-void wnck_tasklist_set_middle_click_close (WnckTasklist  *tasklist,
-					   gboolean       middle_click_close);
 void wnck_tasklist_set_grouping_limit (WnckTasklist *tasklist,
 				       gint          limit);
 void wnck_tasklist_set_include_all_workspaces (WnckTasklist *tasklist,
 					       gboolean      include_all_workspaces);
 void wnck_tasklist_set_button_relief (WnckTasklist *tasklist,
                                       GtkReliefStyle relief);
-void wnck_tasklist_set_orientation (WnckTasklist *tasklist,
-                                    GtkOrientation orient);
-void wnck_tasklist_set_scroll_enabled (WnckTasklist *tasklist,
-                                       gboolean      scroll_enabled);
-gboolean wnck_tasklist_get_scroll_enabled (WnckTasklist *tasklist);
 
 /**
  * WnckLoadIconFunction:

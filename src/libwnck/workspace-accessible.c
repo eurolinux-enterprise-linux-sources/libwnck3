@@ -13,7 +13,9 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  */
 
 #include <libwnck/libwnck.h>
@@ -116,7 +118,11 @@ wnck_workspace_accessible_get_extents (AtkComponent *component,
   g_return_if_fail (WNCK_IS_WORKSPACE (g_obj));
 
   parent = atk_object_get_parent (ATK_OBJECT(component));
+#if GTK_CHECK_VERSION(2,21,0)
   widget = gtk_accessible_get_widget (GTK_ACCESSIBLE (parent));
+#else
+  widget = GTK_ACCESSIBLE (parent)->widget;
+#endif
 
   if (widget == NULL)
     {
@@ -131,7 +137,7 @@ wnck_workspace_accessible_get_extents (AtkComponent *component,
 
   g_return_if_fail (WNCK_IS_PAGER (pager));
 
-  atk_component_get_extents (ATK_COMPONENT (parent), &px, &py, NULL, NULL, coords);
+  atk_component_get_position (ATK_COMPONENT (parent), &px,&py, coords);
 
   _wnck_pager_get_workspace_rect (pager, WNCK_WORKSPACE_ACCESSIBLE (component)->index, &rect);
 

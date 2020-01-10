@@ -16,7 +16,9 @@
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  */
 
 #ifndef WNCK_PRIVATE_H
@@ -40,9 +42,6 @@ G_BEGIN_DECLS
 
 WnckClientType _wnck_get_client_type (void);
 
-gsize _wnck_get_default_icon_size (void);
-gsize _wnck_get_default_mini_icon_size (void);
-
 void _wnck_application_process_property_notify (WnckApplication *app,
                                                 XEvent          *xevent);
 void _wnck_window_process_property_notify (WnckWindow *window,
@@ -57,8 +56,6 @@ WnckWindow* _wnck_window_create  (Window      xwindow,
                                   gint        sort_order);
 void        _wnck_window_destroy (WnckWindow *window);
 
-void        _wnck_window_load_icons (WnckWindow *window);
-
 char*       _wnck_window_get_name_for_display (WnckWindow *window,
                                                gboolean    use_icon_name,
                                                gboolean    use_state_decorations);
@@ -69,8 +66,8 @@ time_t      _wnck_window_or_transient_get_needs_attention_time (WnckWindow *wind
 
 void        _wnck_window_shutdown_all (void);
 
-WnckWorkspace* _wnck_workspace_create  (int            number, 
-                                        WnckScreen    *screen);
+WnckWorkspace* _wnck_workspace_create  (int            number,
+					WnckScreen    *screen);
 void           _wnck_workspace_destroy (WnckWorkspace *space);
 
 void _wnck_window_set_application    (WnckWindow      *window,
@@ -80,9 +77,10 @@ void _wnck_window_set_class_group (WnckWindow     *window,
 				   WnckClassGroup *class_group);
 
 /* this one is in pager.c since it needs code from there to draw the icon */
-void _wnck_window_set_as_drag_icon (WnckWindow     *window,
-                                    GdkDragContext *context,
-                                    GtkWidget      *drag_source);
+void 
+_wnck_window_set_as_drag_icon (WnckWindow     *window,
+                               GdkDragContext *context,
+                               GtkWidget      *drag_source);
 
 void _wnck_application_add_window    (WnckApplication *app,
                                       WnckWindow      *window);
@@ -92,7 +90,6 @@ void _wnck_application_remove_window (WnckApplication *app,
 WnckApplication* _wnck_application_create  (Window           xwindow,
                                             WnckScreen      *screen);
 void             _wnck_application_destroy (WnckApplication *app);
-void             _wnck_application_load_icons (WnckApplication *app);
 void             _wnck_application_shutdown_all (void);
 
 
@@ -117,6 +114,11 @@ gboolean _wnck_workspace_set_viewport (WnckWorkspace *space, int x, int y);
 
 void _wnck_init (void);
 Display *_wnck_get_default_display (void);
+
+#define DEFAULT_ICON_WIDTH 32
+#define DEFAULT_ICON_HEIGHT 32
+#define DEFAULT_MINI_ICON_WIDTH 16
+#define DEFAULT_MINI_ICON_HEIGHT 16
 
 #define WNCK_SCREEN_XSCREEN(screen) (_wnck_screen_get_xscreen (screen))
 
@@ -144,10 +146,8 @@ void           _wnck_pager_get_workspace_rect   (WnckPager     *pager,
 void           _make_gtk_label_bold   (GtkLabel *label);
 void           _make_gtk_label_normal (GtkLabel *label);
 
-void           _wnck_selector_set_window_icon   (GtkWidget     *image,
-                                                 WnckWindow    *window);
+void           _wnck_stock_icons_init (void);
 
-void           _wnck_ensure_fallback_style      (void);
 
 G_END_DECLS
 

@@ -18,7 +18,9 @@
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  */
 
 #undef WNCK_DISABLE_DEPRECATED
@@ -151,6 +153,8 @@ enum {
   LAST_SIGNAL
 };
 
+static void wnck_screen_init        (WnckScreen      *screen);
+static void wnck_screen_class_init  (WnckScreenClass *klass);
 static void wnck_screen_finalize    (GObject         *object);
 
 static void update_client_list        (WnckScreen      *screen);
@@ -199,9 +203,47 @@ wnck_screen_init (WnckScreen *screen)
   screen->priv = WNCK_SCREEN_GET_PRIVATE (screen);
 
   screen->priv->number = -1;
+  screen->priv->xroot = None;
+  screen->priv->xscreen = NULL;
+
+  screen->priv->mapped_windows = NULL;
+  screen->priv->stacked_windows = NULL;
+  screen->priv->workspaces = NULL;
+
+  screen->priv->active_window = NULL;
+  screen->priv->previously_active_window = NULL;
+
+  screen->priv->active_workspace = NULL;
+
+  screen->priv->window_order = 0;
+
+  screen->priv->bg_pixmap = None;
+
+  screen->priv->wm_name = NULL;
+
+  screen->priv->update_handler = 0;
+
+#ifdef HAVE_STARTUP_NOTIFICATION
+  screen->priv->sn_display = NULL;
+#endif
+
+  screen->priv->showing_desktop = FALSE;
+
+  screen->priv->vertical_workspaces = FALSE;
   screen->priv->starting_corner = WNCK_LAYOUT_CORNER_TOPLEFT;
   screen->priv->rows_of_workspaces = 1;
   screen->priv->columns_of_workspaces = -1;
+
+  screen->priv->need_update_stack_list = FALSE;
+  screen->priv->need_update_workspace_list = FALSE;
+  screen->priv->need_update_viewport_settings = FALSE;
+  screen->priv->need_update_active_workspace = FALSE;
+  screen->priv->need_update_active_window = FALSE;
+  screen->priv->need_update_workspace_layout = FALSE;
+  screen->priv->need_update_workspace_names = FALSE;
+  screen->priv->need_update_bg_pixmap = FALSE;
+  screen->priv->need_update_showing_desktop = FALSE;
+  screen->priv->need_update_wm = FALSE;
 }
 
 static void
@@ -228,7 +270,8 @@ wnck_screen_class_init (WnckScreenClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckScreenClass, active_window_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__OBJECT,
                   G_TYPE_NONE, 1, WNCK_TYPE_WINDOW);
 
   /**
@@ -244,7 +287,8 @@ wnck_screen_class_init (WnckScreenClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckScreenClass, active_workspace_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__OBJECT,
                   G_TYPE_NONE, 1, WNCK_TYPE_WORKSPACE);
 
   /**
@@ -258,7 +302,8 @@ wnck_screen_class_init (WnckScreenClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckScreenClass, window_stacking_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
                   G_TYPE_NONE, 0);
 
   /**
@@ -273,7 +318,8 @@ wnck_screen_class_init (WnckScreenClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckScreenClass, window_opened),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__OBJECT,
                   G_TYPE_NONE, 1, WNCK_TYPE_WINDOW);
 
   /**
@@ -288,7 +334,8 @@ wnck_screen_class_init (WnckScreenClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckScreenClass, window_closed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__OBJECT,
                   G_TYPE_NONE, 1, WNCK_TYPE_WINDOW);
 
   /**
@@ -303,7 +350,8 @@ wnck_screen_class_init (WnckScreenClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckScreenClass, workspace_created),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__OBJECT,
                   G_TYPE_NONE, 1, WNCK_TYPE_WORKSPACE);
 
   /**
@@ -318,7 +366,8 @@ wnck_screen_class_init (WnckScreenClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckScreenClass, workspace_destroyed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__OBJECT,
                   G_TYPE_NONE, 1, WNCK_TYPE_WORKSPACE);
 
   /**
@@ -333,7 +382,8 @@ wnck_screen_class_init (WnckScreenClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckScreenClass, application_opened),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__OBJECT,
                   G_TYPE_NONE, 1, WNCK_TYPE_APPLICATION);
 
   /**
@@ -348,7 +398,8 @@ wnck_screen_class_init (WnckScreenClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckScreenClass, application_closed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__OBJECT,
                   G_TYPE_NONE, 1, WNCK_TYPE_APPLICATION);
 
   /**
@@ -365,7 +416,8 @@ wnck_screen_class_init (WnckScreenClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckScreenClass, class_group_opened),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__OBJECT,
                   G_TYPE_NONE, 1, WNCK_TYPE_CLASS_GROUP);
 
   /**
@@ -382,7 +434,8 @@ wnck_screen_class_init (WnckScreenClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckScreenClass, class_group_closed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__OBJECT,
                   G_TYPE_NONE, 1, WNCK_TYPE_CLASS_GROUP);
 
   /**
@@ -396,7 +449,8 @@ wnck_screen_class_init (WnckScreenClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckScreenClass, background_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
                   G_TYPE_NONE, 0);
 
   /**
@@ -412,7 +466,8 @@ wnck_screen_class_init (WnckScreenClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckScreenClass, showing_desktop_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
                   G_TYPE_NONE, 0);
 
   /**
@@ -429,7 +484,8 @@ wnck_screen_class_init (WnckScreenClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckScreenClass, viewports_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
                   G_TYPE_NONE, 0);
 
   /**
@@ -445,7 +501,8 @@ wnck_screen_class_init (WnckScreenClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckScreenClass, window_manager_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
                   G_TYPE_NONE, 0);
 }
 
@@ -623,20 +680,15 @@ _wnck_screen_get_existing (int number)
  *
  * Gets the default #WnckScreen on the default display.
  *
- * Return value: (transfer none) (nullable): the default #WnckScreen. The returned
- * #WnckScreen is owned by libwnck and must not be referenced or unreferenced. This
- * can return %NULL if not on X11.
+ * Return value: (transfer none): the default #WnckScreen. The returned
+ * #WnckScreen is owned by libwnck and must not be referenced or unreferenced.
  **/
 WnckScreen*
 wnck_screen_get_default (void)
 {
   int default_screen;
-  Display *default_display = _wnck_get_default_display ();
 
-  if (default_display == NULL)
-    return NULL;
-
-  default_screen = DefaultScreen (default_display);
+  default_screen = DefaultScreen (_wnck_get_default_display ());
 
   return wnck_screen_get (default_screen);
 }
@@ -872,10 +924,7 @@ _wnck_screen_get_gdk_screen (WnckScreen *screen)
   if (!gdkdisplay)
     return NULL;
 
-  if (screen->priv->number != 0)
-    return NULL;
-
-  return gdk_display_get_default_screen (gdkdisplay);
+  return gdk_display_get_screen (gdkdisplay, screen->priv->number);
 }
 
 /**
@@ -1220,8 +1269,6 @@ wnck_screen_calc_workspace_layout (WnckScreen          *screen,
               --r;
             }
         }
-      break;
-    default:
       break;
     }
 
@@ -1891,12 +1938,12 @@ update_viewport_settings (WnckScreen *screen)
               space = wnck_screen_get_workspace (screen, i);
               g_assert (space != NULL);
 
-              /* p_coord[x] is unsigned, and thus >= 0 */
-              if ((int) p_coord[x] > space_width - screen_width)
+	      /* p_coord[x] is unsigned, and thus >= 0 */
+              if (p_coord[x] > space_width - screen_width)
                 p_coord[x] = space_width - screen_width;
 
-              /* p_coord[y] is unsigned, and thus >= 0 */
-              if ((int) p_coord[y] > space_height - screen_height)
+	      /* p_coord[y] is unsigned, and thus >= 0 */
+              if (p_coord[y] > space_height - screen_height)
                 p_coord[y] = space_height - screen_height;
 
 	      if (_wnck_workspace_set_viewport (space,

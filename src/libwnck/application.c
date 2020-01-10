@@ -17,7 +17,9 @@
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  */
 
 #include <config.h>
@@ -92,7 +94,10 @@ static void emit_icon_changed (WnckApplication *app);
 static void reset_name  (WnckApplication *app);
 static void update_name (WnckApplication *app);
 
+static void wnck_application_init        (WnckApplication      *application);
+static void wnck_application_class_init  (WnckApplicationClass *klass);
 static void wnck_application_finalize    (GObject        *object);
+
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
@@ -111,8 +116,29 @@ wnck_application_init (WnckApplication *application)
 {
   application->priv = WNCK_APPLICATION_GET_PRIVATE (application);
 
+  application->priv->xwindow = None;
+  application->priv->screen = NULL;
+  application->priv->windows = NULL;
+  application->priv->pid = 0;
+  application->priv->name = NULL;
+
+  application->priv->name_window = NULL;
+
+  application->priv->icon = NULL;
+  application->priv->mini_icon = NULL;
+
   application->priv->icon_cache = _wnck_icon_cache_new ();
-  _wnck_icon_cache_set_want_fallback (application->priv->icon_cache, FALSE);
+  _wnck_icon_cache_set_want_fallback (application->priv->icon_cache,
+                                      FALSE);
+
+  application->priv->icon_window = NULL;
+
+  application->priv->startup_id = NULL;
+
+  application->priv->name_from_leader = FALSE;
+  application->priv->icon_from_leader = FALSE;
+
+  application->priv->need_emit_icon_changed = FALSE;
 }
 
 static void
@@ -135,7 +161,8 @@ wnck_application_class_init (WnckApplicationClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckApplicationClass, name_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
                   G_TYPE_NONE, 0);
 
   /**
@@ -149,7 +176,8 @@ wnck_application_class_init (WnckApplicationClass *klass)
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (WnckApplicationClass, icon_changed),
-                  NULL, NULL, NULL,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
                   G_TYPE_NONE, 0);
 }
 
@@ -332,19 +360,18 @@ get_icons (WnckApplication *app)
 {
   GdkPixbuf *icon;
   GdkPixbuf *mini_icon;
-  gsize normal_size;
-  gsize mini_size;
 
   icon = NULL;
   mini_icon = NULL;
-  normal_size = _wnck_get_default_icon_size ();
-  mini_size = _wnck_get_default_mini_icon_size ();
 
   if (_wnck_read_icons (WNCK_SCREEN_XSCREEN (app->priv->screen),
                         app->priv->xwindow,
                         app->priv->icon_cache,
-                        &icon, normal_size, normal_size,
-                        &mini_icon, mini_size, mini_size))
+                        &icon,
+                        DEFAULT_ICON_WIDTH, DEFAULT_ICON_HEIGHT,
+                        &mini_icon,
+                        DEFAULT_MINI_ICON_WIDTH,
+                        DEFAULT_MINI_ICON_HEIGHT))
     {
       app->priv->need_emit_icon_changed = TRUE;
       app->priv->icon_from_leader = TRUE;
@@ -367,16 +394,6 @@ get_icons (WnckApplication *app)
 
   g_assert ((app->priv->icon && app->priv->mini_icon) ||
             !(app->priv->icon || app->priv->mini_icon));
-}
-
-void
-_wnck_application_load_icons (WnckApplication *app)
-{
-  g_return_if_fail (WNCK_IS_APPLICATION (app));
-
-  get_icons (app);
-  if (app->priv->need_emit_icon_changed)
-    emit_icon_changed (app);
 }
 
 /* Prefer to get group icon from a window of type "normal" */
@@ -419,7 +436,9 @@ wnck_application_get_icon (WnckApplication *app)
 {
   g_return_val_if_fail (WNCK_IS_APPLICATION (app), NULL);
 
-  _wnck_application_load_icons (app);
+  get_icons (app);
+  if (app->priv->need_emit_icon_changed)
+    emit_icon_changed (app);
 
   if (app->priv->icon)
     return app->priv->icon;
@@ -450,7 +469,9 @@ wnck_application_get_mini_icon (WnckApplication *app)
 {
   g_return_val_if_fail (WNCK_IS_APPLICATION (app), NULL);
 
-  _wnck_application_load_icons (app);
+  get_icons (app);
+  if (app->priv->need_emit_icon_changed)
+    emit_icon_changed (app);
 
   if (app->priv->mini_icon)
     return app->priv->mini_icon;

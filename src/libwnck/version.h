@@ -15,18 +15,13 @@
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Authors:
  *      Vincent Untz <vuntz@gnome.org>
  */
-
-#if !defined (__LIBWNCK_H_INSIDE__) && !defined (WNCK_COMPILATION)
-#error "Only <libwnck/libwnck.h> can be included directly."
-#endif
-
-#ifndef WNCK_VERSION_H
-#define WNCK_VERSION_H
 
 /**
  * SECTION:version
@@ -37,6 +32,13 @@
  * for builds that have a configure script, and to write code against different
  * versions of libwnck that do not provide the same API.
  */
+
+#if !defined (__LIBWNCK_H_INSIDE__) && !defined (WNCK_COMPILATION)
+#error "Only <libwnck/libwnck.h> can be included directly."
+#endif
+
+#ifndef WNCK_VERSION_H
+#define WNCK_VERSION_H
 
 /**
  * WNCK_MAJOR_VERSION:
@@ -60,7 +62,7 @@
  *
  * Since: 3.0
  */
-#define WNCK_MINOR_VERSION (24)
+#define WNCK_MINOR_VERSION (4)
 
 /**
  * WNCK_MICRO_VERSION:
@@ -72,7 +74,7 @@
  *
  * Since: 3.0
  */
-#define WNCK_MICRO_VERSION (1)
+#define WNCK_MICRO_VERSION (5)
 
 /**
  * WNCK_CHECK_VERSION:

@@ -16,7 +16,9 @@
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  */
 
 #include <config.h>
@@ -25,6 +27,7 @@
 #include "util.h"
 #include "xutils.h"
 #include "private.h"
+#include "inlinepixbufs.h"
 #include <gdk/gdkx.h>
 #include <string.h>
 #ifdef HAVE_XRES
@@ -49,15 +52,6 @@
  *
  * These functions are utility functions providing some additional features to
  * libwnck users.
- */
-
-/**
- * SECTION:icons
- * @short_description: icons related functions.
- * @stability: Unstable
- *
- * These functions are utility functions to manage icons for #WnckWindow and
- * #WnckApplication.
  */
 
 typedef enum
@@ -106,7 +100,11 @@ _wnck_print_resource_usage (WnckResourceUsage *usage)
 static WnckExtStatus
 wnck_init_resource_usage (GdkDisplay *gdisplay)
 {
+  int event, error;
+  Display *xdisplay;
   WnckExtStatus status;
+
+  xdisplay = GDK_DISPLAY_XDISPLAY (gdisplay);
 
   status = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (gdisplay),
                                                "wnck-xres-status"));
@@ -114,9 +112,6 @@ wnck_init_resource_usage (GdkDisplay *gdisplay)
   if (status == WNCK_EXT_UNKNOWN)
     {
 #ifdef HAVE_XRES
-      Display *xdisplay = GDK_DISPLAY_XDISPLAY (gdisplay);
-      int event, error;
-
       if (!XResQueryExtension (xdisplay, &event, &error))
         status = WNCK_EXT_MISSING;
       else
@@ -210,7 +205,7 @@ wnck_xid_read_resource_usage (GdkDisplay        *gdisplay,
    i = 0;
    while (i < n_types)
      {
-       guint t = types[i].resource_type;
+       int t = types[i].resource_type;
 
        if (t == pixmap_atom)
          usage->n_pixmaps += types[i].count;
@@ -309,7 +304,7 @@ wnck_find_pid_for_resource_r (Display *xdisplay,
   Window   dummy;
   Window  *children;
   guint    n_children;
-  guint    i;
+  int      i;
   gulong   found_pid = 0;
 
   while (gtk_events_pending ())
@@ -561,7 +556,7 @@ wnck_pid_read_resource_usage_no_cache (GdkDisplay        *gdisplay,
       tmp = windows;
       while (tmp != NULL)
         {
-          if (wnck_window_get_pid (tmp->data) == (int) pid)
+          if (wnck_window_get_pid (tmp->data) == pid)
             {
               wnck_xid_read_resource_usage (gdisplay,
                                             wnck_window_get_xid (tmp->data),
@@ -662,74 +657,6 @@ _wnck_get_client_type (void)
   return client_type;
 }
 
-static gsize default_icon_size = WNCK_DEFAULT_ICON_SIZE;
-
-/**
- * wnck_set_default_icon_size:
- * @size: the default size for windows and application standard icons.
- *
- * The default main icon size is %WNCK_DEFAULT_ICON_SIZE. This function allows
- * to change this value.
- *
- * Since: 2.4.6
- */
-void
-wnck_set_default_icon_size (gsize size)
-{
-  default_icon_size = size;
-}
-
-gsize
-_wnck_get_default_icon_size (void)
-{
-  return default_icon_size;
-}
-
-static gsize default_mini_icon_size = WNCK_DEFAULT_MINI_ICON_SIZE;
-
-/**
- * wnck_set_default_mini_icon_size:
- * @size: the default size for windows and application mini icons.
- *
- * The default main icon size is %WNCK_DEFAULT_MINI_ICON_SIZE. This function
- * allows to change this value.
- *
- * Since: 2.4.6
- */
-void
-wnck_set_default_mini_icon_size (gsize size)
-{
-  int default_screen;
-  WnckScreen *screen;
-  GList *l;
-
-  default_mini_icon_size = size;
-
-  default_screen = DefaultScreen (_wnck_get_default_display ());
-  screen = _wnck_screen_get_existing (default_screen);
-
-  if (WNCK_IS_SCREEN (screen))
-    {
-      /* Make applications and icons to reload their icons */
-      for (l = wnck_screen_get_windows (screen); l; l = l->next)
-        {
-          WnckWindow *window = WNCK_WINDOW (l->data);
-          WnckApplication *application = wnck_window_get_application (window);
-
-          _wnck_window_load_icons (window);
-
-          if (WNCK_IS_APPLICATION (application))
-            _wnck_application_load_icons (application);
-        }
-    }
-}
-
-gsize
-_wnck_get_default_mini_icon_size (void)
-{
-  return default_mini_icon_size;
-}
-
 /**
  * _make_gtk_label_bold:
  * @label: The label.
@@ -739,21 +666,41 @@ _wnck_get_default_mini_icon_size (void)
 void
 _make_gtk_label_bold (GtkLabel *label)
 {
-  GtkStyleContext *context;
+  PangoFontDescription *font_desc;
 
-  _wnck_ensure_fallback_style ();
+  font_desc = pango_font_description_new ();
 
-  context = gtk_widget_get_style_context (GTK_WIDGET (label));
-  gtk_style_context_add_class (context, "wnck-needs-attention");
+  pango_font_description_set_weight (font_desc,
+                                     PANGO_WEIGHT_BOLD);
+
+  /* This will only affect the weight of the font, the rest is
+   * from the current state of the widget, which comes from the
+   * theme or user prefs, since the font desc only has the
+   * weight flag turned on.
+   */
+  gtk_widget_override_font (GTK_WIDGET (label), font_desc);
+
+  pango_font_description_free (font_desc);
 }
 
 void
 _make_gtk_label_normal (GtkLabel *label)
 {
-  GtkStyleContext *context;
+  PangoFontDescription *font_desc;
 
-  context = gtk_widget_get_style_context (GTK_WIDGET (label));
-  gtk_style_context_remove_class (context, "wnck-needs-attention");
+  font_desc = pango_font_description_new ();
+
+  pango_font_description_set_weight (font_desc,
+                                     PANGO_WEIGHT_NORMAL);
+
+  /* This will only affect the weight of the font, the rest is
+   * from the current state of the widget, which comes from the
+   * theme or user prefs, since the font desc only has the
+   * weight flag turned on.
+   */
+  gtk_widget_override_font (GTK_WIDGET (label), font_desc);
+
+  pango_font_description_free (font_desc);
 }
 
 #ifdef HAVE_STARTUP_NOTIFICATION
@@ -786,16 +733,57 @@ _wnck_init (void)
 Display *
 _wnck_get_default_display (void)
 {
-  GdkDisplay *display = gdk_display_get_default ();
   /* FIXME: when we fix libwnck to not use the GDK default display, we will
    * need to fix wnckprop accordingly. */
-  if (!GDK_IS_X11_DISPLAY (display))
+  return GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
+}
+
+/* stock icon code Copyright (C) 2002 Jorn Baayen <jorn@nl.linux.org> */
+typedef struct
+{
+  char *stock_id;
+  const guint8 *icon_data;
+} StockIcon;
+
+void
+_wnck_stock_icons_init (void)
+{
+  GtkIconFactory *factory;
+  int i;
+  static gboolean done = FALSE;
+
+  StockIcon items[] =
+  {
+    { WNCK_STOCK_DELETE,   stock_delete_data   },
+    { WNCK_STOCK_MINIMIZE, stock_minimize_data },
+    { WNCK_STOCK_MAXIMIZE, stock_maximize_data }
+  };
+
+  if (done)
+    return;
+
+  done = TRUE;
+
+  factory = gtk_icon_factory_new ();
+  gtk_icon_factory_add_default (factory);
+
+  for (i = 0; i < (gint) G_N_ELEMENTS (items); i++)
     {
-      g_warning ("libwnck is designed to work in X11 only, no valid display found");
-      return NULL;
+      GtkIconSet *icon_set;
+      GdkPixbuf *pixbuf;
+
+      pixbuf = gdk_pixbuf_new_from_inline (-1, items[i].icon_data,
+					   FALSE,
+					   NULL);
+
+      icon_set = gtk_icon_set_new_from_pixbuf (pixbuf);
+      gtk_icon_factory_add (factory, items[i].stock_id, icon_set);
+      gtk_icon_set_unref (icon_set);
+
+      g_object_unref (G_OBJECT (pixbuf));
     }
 
-  return GDK_DISPLAY_XDISPLAY (display);
+  g_object_unref (G_OBJECT (factory));
 }
 
 /**
@@ -845,27 +833,4 @@ wnck_shutdown (void)
   xres_removeid = 0;
   wnck_pid_read_resource_usage_destroy_hash_table (NULL);
 #endif
-}
-
-void
-_wnck_ensure_fallback_style (void)
-{
-  static gboolean css_loaded = FALSE;
-  GtkCssProvider *provider;
-  guint priority;
-
-  if (css_loaded)
-    return;
-
-  provider = gtk_css_provider_new ();
-  gtk_css_provider_load_from_resource (provider, "/org/gnome/libwnck/wnck.css");
-
-  priority = GTK_STYLE_PROVIDER_PRIORITY_FALLBACK;
-  gtk_style_context_add_provider_for_screen (gdk_screen_get_default (),
-                                             GTK_STYLE_PROVIDER (provider),
-                                             priority);
-
-  g_object_unref (provider);
-
-  css_loaded = TRUE;
 }

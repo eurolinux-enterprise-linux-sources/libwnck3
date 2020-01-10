@@ -1,4 +1,4 @@
-# Basque translation for libwnck
+# translation of eu.po to Basque
 # This file is distributed under the same license as the PACKAGE package.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER.
 #
@@ -7,13 +7,13 @@
 # Iñaki Larrañaga Murgoitio <dooteo@zundan.com>, 2007, 2011.
 msgid ""
 msgstr ""
-"Project-Id-Version: libwnck master\n"
+"Project-Id-Version: eu\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-25 13:23+0200\n"
 "PO-Revision-Date: 2011-09-25 13:22+0200\n"
 "Last-Translator: \n"
 "Language-Team: American English <kde-i18n-doc@kde.org>\n"
-"Language: eu\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
